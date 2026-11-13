@@ -1,5 +1,7 @@
 # cambridge past paper fetcher
 
+hosted at cppfetcher.netlify.app
+
 A fast, zero-dependency search engine for Cambridge O-Level and A-Level students. Type any paper casually—with typos, student slang, or slash shorthand—and press `Enter` to open the exact **Question Paper (QP)** and **Mark Scheme (MS)** PDFs directly in new tabs.
 
 No more clicking through five nested folders, syllabus directories, or ad walls during exam practice.
