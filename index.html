@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cambridge Past Paper Fetcher</title>
+
+<script defer src="https://cloud.umami.is/script.js" data-website-id="c1eb2174-96de-49da-8b5c-8d9a06b20cba"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f4f4f5;
+      --text: #18181b;
+      --text-secondary: #52525b;
+      --text-muted: #a1a1aa;
+      --border: #e4e4e7;
+      --ring-focus: rgba(24, 24, 27, 0.05);
+      --glow-focus: rgba(99, 102, 241, 0.12);
+      --ms-yes-bg: #10b981;
+      --ms-no-bg: #991b1b;
+      --tick-bg: #f0fdf4;
+      --tick-border: #bbf7d0;
+      --tick-text: #15803d;
+      /* Deep, angry crimson palette */
+      --error-bg: #7f1d1d;
+      --error-border: #450a0a;
+      --error-text: #fef2f2;
+      --error-flash: #881313;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 28px;
+      overflow-x: hidden;
+    }
+
+    /* Full-Screen Angry Crimson Flash + Coordinated Blur & Contrast Inversion */
+    body.bg-error-flash {
+      animation: fullRedFlash 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fullRedFlash {
+      0% {
+        background-color: #ffffff;
+      }
+      18% {
+        background-color: var(--error-flash);
+      }
+      100% {
+        background-color: #ffffff;
+      }
+    }
+
+    body.bg-error-flash .page-heading,
+    body.bg-error-flash .ms-label {
+      animation: textFlashInvert 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes textFlashInvert {
+      0% {
+        color: var(--text);
+        filter: blur(0px);
+      }
+      18% {
+        color: #ffe4e6;
+        filter: blur(3px);
+      }
+      100% {
+        color: var(--text);
+        filter: blur(0px);
+      }
+    }
+
+    body.bg-error-flash .search-shell,
+    body.bg-error-flash .segmented,
+    body.bg-error-flash .ms-switch,
+    body.bg-error-flash .pill.detected,
+    body.bg-error-flash .popup-notice {
+      animation: surfaceBlurDim 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes surfaceBlurDim {
+      0% {
+        filter: blur(0px);
+        opacity: 1;
+      }
+      18% {
+        filter: blur(6px);
+        opacity: 0.42;
+      }
+      100% {
+        filter: blur(0px);
+        opacity: 1;
+      }
+    }
+
+    /* Scaled-up Main Container */
+    .stage {
+      width: 100%;
+      max-width: 750px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      transform: translateY(-2vh);
+    }
+
+    /* Scaled-up Heading */
+    .page-heading {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 24px;
+      padding-left: 6px;
+    }
+
+    /* Toggles Row Directly Above Search Bar */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      padding: 0 6px;
+      flex-wrap: wrap;
+    }
+
+    /* Sliding Segmented Control (Auto | O-Level | A-Level) */
+    .segmented {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      height: 40px;
+      min-width: 260px;
+      user-select: none;
+    }
+
+    .segmented-thumb {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: calc((100% - 8px) / 3);
+      height: calc(100% - 8px);
+      background: #ffffff;
+      border-radius: 999px;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        0 1px 1px rgba(0, 0, 0, 0.04);
+      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .segmented[data-active="none"] .segmented-thumb {
+      transform: translateX(0%);
+    }
+    .segmented[data-active="olevel"] .segmented-thumb {
+      transform: translateX(100%);
+    }
+    .segmented[data-active="alevel"] .segmented-thumb {
+      transform: translateX(200%);
+    }
+
+    .seg-btn {
+      position: relative;
+      z-index: 2;
+      appearance: none;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 999px;
+      transition: color 0.2s ease;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+
+    .seg-btn:hover {
+      color: var(--text);
+    }
+
+    .seg-btn.active {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Separated "Include MS" Label + Dedicated yes/no Switch */
+    .ms-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+    }
+
+    .ms-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .ms-switch {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      height: 40px;
+      width: 106px;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .ms-thumb {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: calc((100% - 8px) / 2);
+      height: calc(100% - 8px);
+      border-radius: 999px;
+      background: var(--ms-yes-bg);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
+      transition:
+        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 0.28s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .ms-switch[data-ms="no"] .ms-thumb {
+      transform: translateX(100%);
+      background: var(--ms-no-bg);
+    }
+
+    .ms-opt {
+      position: relative;
+      z-index: 2;
+      font-size: 13.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: color 0.2s ease;
+    }
+
+    .ms-switch[data-ms="yes"] .ms-opt[data-choice="yes"],
+    .ms-switch[data-ms="no"] .ms-opt[data-choice="no"] {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Scaled-up Search Bar */
+    .search-shell {
+      position: relative;
+      width: 100%;
+      height: 74px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.02),
+        0 12px 28px -6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      padding: 0 22px 0 28px;
+      transition:
+        border-color 0.25s ease,
+        box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .search-shell.focused {
+      border-color: #a1a1aa;
+      box-shadow:
+        0 0 0 5px var(--ring-focus),
+        0 14px 36px -8px var(--glow-focus),
+        0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .search-shell.error-shake {
+      border-color: #7f1d1d;
+      box-shadow:
+        0 0 0 5px rgba(153, 27, 27, 0.28),
+        0 12px 28px -6px rgba(127, 29, 29, 0.35);
+      animation: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translateX(-4px); }
+      20%, 80% { transform: translateX(6px); }
+      30%, 50%, 70% { transform: translateX(-8px); }
+      40%, 60% { transform: translateX(8px); }
+    }
+
+    .search-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--text-muted);
+      margin-right: 16px;
+      flex-shrink: 0;
+      transition: color 0.2s ease;
+    }
+
+    .search-shell.focused .search-icon {
+      color: var(--text);
+    }
+
+    .input-viewport {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .blur-mirror {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      white-space: pre;
+      pointer-events: none;
+      font-size: 19px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .placeholder-text {
+      color: var(--text-muted);
+      font-size: 19px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      user-select: none;
+    }
+
+    .char-span {
+      display: inline-block;
+      will-change: filter, opacity, transform;
+    }
+
+    .char-span.animate-in {
+      animation: charBlurIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes charBlurIn {
+      0% {
+        opacity: 0;
+        filter: blur(7px);
+        transform: translateY(3px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .real-input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 19px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      color: transparent;
+      caret-color: var(--text);
+    }
+
+    .real-input::selection {
+      background: rgba(24, 24, 27, 0.12);
+      color: transparent;
+    }
+
+    /* Subtle Resolved Code Badge Inside Search Bar */
+    .resolved-code-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-left: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: scale(0.94);
+      filter: blur(4px);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .resolved-code-badge.visible {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0px);
+    }
+
+    .enter-keycap {
+      margin-left: 10px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+      transition: all 0.18s ease;
+    }
+
+    .enter-keycap:hover {
+      background: var(--text);
+      border-color: var(--text);
+      color: #ffffff;
+    }
+
+    /* Live Checkmark Tags Below Search Bar */
+    .parsed-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 9px;
+      margin-top: 16px;
+      padding-left: 6px;
+    }
+
+    .pill {
+      font-size: 13.5px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .pill-check {
+      width: 14px;
+      height: 14px;
+      display: none;
+      flex-shrink: 0;
+    }
+
+    .pill.detected {
+      background: var(--tick-bg);
+      border-color: var(--tick-border);
+      color: var(--tick-text);
+      font-weight: 500;
+    }
+
+    .pill.detected .pill-check {
+      display: inline-block;
+    }
+
+    .pill.invalid,
+    .pill.missing-alert {
+      background: var(--error-bg);
+      border-color: var(--error-border);
+      color: var(--error-text);
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(127, 29, 29, 0.32);
+      animation: pillBlurIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .pill .pill-key {
+      opacity: 0.78;
+      font-weight: 400;
+    }
+
+    /* Popup Permission Helper Prompt (Shown when Include MS is ON) */
+    .popup-notice {
+      margin-top: 14px;
+      margin-left: 6px;
+      padding: 9px 15px;
+      border-radius: 14px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.45;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      animation: pillBlurIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .popup-notice.visible {
+      display: flex;
+    }
+
+    .popup-notice-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .popup-notice-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .popup-dismiss-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .popup-dismiss-btn:hover {
+      background: var(--text);
+      border-color: var(--text);
+      color: #ffffff;
+    }
+
+    /* Validation / Error / Fallback Notice Below Tags */
+    .missing-pills-stage {
+      margin-top: 12px;
+      min-height: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      padding-left: 6px;
+      gap: 9px;
+    }
+
+    .blur-pill {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      box-shadow: 0 4px 14px rgba(127, 29, 29, 0.28);
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      opacity: 0;
+      animation: pillBlurIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .blur-pill.neutral-pill {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border-radius: 16px;
+      padding: 10px 16px;
+    }
+
+    .blur-pill a,
+    .blur-pill button {
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid currentColor;
+      color: #7f1d1d;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .blur-pill a:hover,
+    .blur-pill button:hover {
+      transform: translateY(-1px);
+    }
+
+    .blur-pill.neutral-pill a {
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    /* Floating GitHub Button in Bottom Right */
+    .github-fab {
+      position: fixed;
+      bottom: 22px;
+      right: 24px;
+      z-index: 40;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .github-fab:hover {
+      background: var(--text);
+      border-color: var(--text);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .github-fab svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    @keyframes pillBlurIn {
+      0% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: translateY(4px) scale(0.95);
+      }
+      35% {
+        opacity: 0.85;
+        filter: blur(5px);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page-heading {
+        font-size: 21px;
+        padding-left: 0;
+      }
+      .controls-bar {
+        padding: 0;
+      }
+      .search-shell {
+        height: 62px;
+        padding: 0 16px 0 20px;
+      }
+      .blur-mirror,
+      .real-input,
+      .placeholder-text {
+        font-size: 16.5px;
+      }
+      .resolved-code-badge {
+        display: none;
+      }
+      .parsed-pills,
+      .missing-pills-stage,
+      .popup-notice {
+        padding-left: 0;
+        margin-left: 0;
+      }
+      .github-fab {
+        bottom: 16px;
+        right: 16px;
+        padding: 8px 13px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="stage">
+    <h1 class="page-heading">Cambridge Past Paper Fetcher</h1>
+
+    <!-- Controls Directly Above Search Bar -->
+    <div class="controls-bar">
+      <div class="segmented" id="levelSelector" data-active="none" role="group" aria-label="Exam Level">
+        <div class="segmented-thumb"></div>
+        <button type="button" class="seg-btn active" data-level="none">Auto</button>
+        <button type="button" class="seg-btn" data-level="olevel">O-Level</button>
+        <button type="button" class="seg-btn" data-level="alevel">A-Level</button>
+      </div>
+
+      <!-- Separated Label + Dedicated 2-Way Toggle -->
+      <div class="ms-group">
+        <span class="ms-label">Include MS</span>
+        <div class="ms-switch" id="msToggle" data-ms="yes" role="switch" aria-checked="true" tabindex="0">
+          <div class="ms-thumb"></div>
+          <span class="ms-opt" data-choice="yes">yes</span>
+          <span class="ms-opt" data-choice="no">no</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-shell" id="searchShell">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+
+      <div class="input-viewport">
+        <div class="blur-mirror" id="blurMirror">
+          <span class="placeholder-text" id="placeholderText">Search your paper...</span>
+        </div>
+        <input
+          type="text"
+          id="searchInput"
+          class="real-input"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Search your paper"
+        />
+      </div>
+
+      <span class="resolved-code-badge" id="resolvedBadge"></span>
+      <span class="enter-keycap" id="enterBtn" title="Open PDF">↵</span>
+    </div>
+
+    <!-- Live Checkmark Status Tags -->
+    <div class="parsed-pills" id="parsedPills">
+      <span class="pill" data-pill="level">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Level:</span> <span class="pill-val">—</span>
+      </span>
+      <span class="pill" data-pill="subject">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Subject:</span> <span class="pill-val">—</span>
+      </span>
+      <span class="pill" data-pill="session">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Session:</span> <span class="pill-val">—</span>
+      </span>
+      <span class="pill" data-pill="year">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Year:</span> <span class="pill-val">—</span>
+      </span>
+      <span class="pill" data-pill="paper">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Paper:</span> <span class="pill-val">—</span>
+      </span>
+      <span class="pill" data-pill="variant">
+        <svg class="pill-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"></polyline></svg>
+        <span class="pill-key">Variant:</span> <span class="pill-val">—</span>
+      </span>
+    </div>
+
+    <!-- Dismissible Popup Permission Prompt (Shown when Include MS = yes) -->
+    <div class="popup-notice" id="popupNotice">
+      <div class="popup-notice-left">
+        <svg class="popup-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span><strong>Include MS is on:</strong> To open Question Paper &amp; Mark Scheme in 2 tabs at once, click <strong>"Always allow pop-ups"</strong> in your browser address bar if prompted.</span>
+      </div>
+      <button type="button" class="popup-dismiss-btn" id="dismissPopupNoticeBtn">Got it</button>
+    </div>
+
+    <!-- Blur-In Validation / Error Details Stage -->
+    <div class="missing-pills-stage" id="missingPillsStage" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- Bottom-Right GitHub Button -->
+  <a
+    href="https://github.com/Agent206/cambridge-past-paper-fetcher"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="github-fab"
+    title="View source on GitHub"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+    </svg>
+    <span>GitHub</span>
+  </a>
+
+  <script>
+    const PAPACAMBRIDGE_BASE = "https://pastpapers.papacambridge.com/directories/CAIE/CAIE-pastpapers/upload";
+
+    /********************************************************************
+     * 1. CORE + EXTENDED SUBJECT CATALOG WITH STUDENT SLANG ALIASES
+     ********************************************************************/
+    const CORE_SUBJECTS = [
+      {
+        name: "Further Mathematics",
+        aliases: [
+          "further maths", "further math", "further mathematics",
+          "f maths", "f math", "fmaths", "fmath", "further",
+          "further pure", "fp1", "fp2", "f mths"
+        ],
+        alevel: "9231", olevel: null,
+        aPapers: [1, 2, 3, 4]
+      },
+      {
+        name: "Additional Mathematics",
+        aliases: [
+          "add maths", "add math", "additional maths", "additional math",
+          "additional mathematics", "addmaths", "addmath", "ad maths",
+          "ad math", "add mths", "amaths", "amath"
+        ],
+        alevel: null, olevel: "4037",
+        oPapers: [1, 2]
+      },
+      {
+        name: "Mathematics",
+        aliases: ["maths", "math", "mathematics", "pure maths", "pure math", "mths", "mth", "maht", "mhat", "maths d", "d maths"],
+        alevel: "9709", olevel: "4024",
+        aPapers: [1, 2, 3, 4, 5, 6], oPapers: [1, 2]
+      },
+      {
+        name: "Physics",
+        aliases: ["physics", "phys", "phy", "phx", "phscs", "fysics"],
+        alevel: "9702", olevel: "5054",
+        aPapers: [1, 2, 3, 4, 5], oPapers: [1, 2, 3, 4],
+        hasSciencePracticalP3: true
+      },
+      {
+        name: "Chemistry",
+        aliases: ["chemistry", "chem", "chm", "chemo", "chmstry"],
+        alevel: "9701", olevel: "5070",
+        aPapers: [1, 2, 3, 4, 5], oPapers: [1, 2, 3, 4],
+        hasSciencePracticalP3: true
+      },
+      {
+        name: "Biology",
+        aliases: ["biology", "bio", "biol", "blgy"],
+        alevel: "9700", olevel: "5090",
+        aPapers: [1, 2, 3, 4, 5], oPapers: [1, 2, 3, 4],
+        hasSciencePracticalP3: true
+      },
+      {
+        name: "Computer Science",
+        aliases: ["computer science", "comp sci", "compsci", "cs", "comp", "computing", "computer", "computers", "cmptr"],
+        alevel: "9618", olevel: "2210",
+        aPapers: [1, 2, 3, 4], oPapers: [1, 2],
+        minYearA: 2021
+      },
+      {
+        name: "Economics",
+        aliases: ["economics", "econ", "eco", "econs", "ecnmcs"],
+        alevel: "9708", olevel: "2281",
+        aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Business",
+        aliases: ["business", "business studies", "bus", "bst", "bstudies", "biz", "bsnss"],
+        alevel: "9609", olevel: "7115",
+        aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Accounting",
+        aliases: ["accounting", "accounts", "acc", "acct", "accts", "poa", "principles of accounts", "accntng"],
+        alevel: "9706", olevel: "7707",
+        aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "English Language",
+        aliases: ["english", "english language", "eng", "eng lang", "englsh"],
+        alevel: "9093", olevel: "1123",
+        aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      }
+    ];
+
+    const EXTENDED_SUBJECTS_CATALOG = [
+      {
+        name: "Pakistan Studies",
+        aliases: ["pakistan studies", "pak studies", "pakstudies", "pk studies", "pst", "pak std", "pak stds"],
+        alevel: null, olevel: "2059", oPapers: [1, 2]
+      },
+      {
+        name: "Islamiyat",
+        aliases: ["islamiyat", "islamiat", "isl", "islamic studies", "islamyat", "islmyt"],
+        alevel: "9488", olevel: "2058", aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Psychology",
+        aliases: ["psychology", "psych", "psy", "psycho", "psyc", "pschlgy"],
+        alevel: "9990", olevel: null, aPapers: [1, 2, 3, 4]
+      },
+      {
+        name: "Sociology",
+        aliases: ["sociology", "soc", "socio", "soci", "sclgy"],
+        alevel: "9699", olevel: "2251", aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Law",
+        aliases: ["law", "legal", "legal studies"],
+        alevel: "9084", olevel: null, aPapers: [1, 2, 3, 4]
+      },
+      {
+        name: "English General Paper",
+        aliases: ["general paper", "english general paper", "egp", "gp", "eng gp"],
+        alevel: "8021", olevel: null, aPapers: [1, 2]
+      },
+      {
+        name: "History",
+        aliases: ["history", "hist", "hstry", "world history", "international history"],
+        alevel: "9489", olevel: "2147", aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Geography",
+        aliases: ["geography", "geo", "geog", "ggrphy"],
+        alevel: "9696", olevel: "2217", aPapers: [1, 2, 3, 4], oPapers: [1, 2, 3]
+      },
+      {
+        name: "Urdu",
+        aliases: ["urdu", "first language urdu", "second language urdu", "urdu a", "urdu b", "salis urdu"],
+        alevel: "9686", olevel: "3248", aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Information Technology",
+        aliases: ["information technology", "info tech", "it", "ict"],
+        alevel: "9626", olevel: "0417", aPapers: [1, 2, 3, 4], oPapers: [1, 2, 3]
+      },
+      {
+        name: "Literature in English",
+        aliases: ["english literature", "literature in english", "literature", "lit", "eng lit"],
+        alevel: "9695", olevel: "2010", aPapers: [1, 2, 3, 4], oPapers: [1, 2]
+      },
+      {
+        name: "Media Studies",
+        aliases: ["media studies", "media"],
+        alevel: "9607", olevel: null, aPapers: [1, 2, 3, 4]
+      },
+      {
+        name: "Environmental Management",
+        aliases: ["environmental management", "evm", "em", "env management", "environmental"],
+        alevel: "8291", olevel: "5014", aPapers: [1, 2], oPapers: [1, 2]
+      },
+      {
+        name: "Marine Science",
+        aliases: ["marine science", "marine"],
+        alevel: "9693", olevel: "5180", aPapers: [1, 2, 3, 4], oPapers: [1, 2, 3]
+      },
+      {
+        name: "Thinking Skills",
+        aliases: ["thinking skills", "thinking", "ts"],
+        alevel: "9694", olevel: null, aPapers: [1, 2, 3, 4]
+      },
+      {
+        name: "Global Perspectives",
+        aliases: ["global perspectives", "gpr", "global"],
+        alevel: "9239", olevel: "2069", aPapers: [1, 2, 3, 4], oPapers: [1]
+      },
+      {
+        name: "Statistics",
+        aliases: ["statistics", "stats", "stat"],
+        alevel: null, olevel: "4040", oPapers: [1, 2]
+      },
+      {
+        name: "Commerce",
+        aliases: ["commerce", "comm"],
+        alevel: null, olevel: "7100", oPapers: [1, 2]
+      },
+      {
+        name: "Combined Science",
+        aliases: ["combined science", "comb sci", "combined"],
+        alevel: null, olevel: "5129", oPapers: [1, 2, 3]
+      },
+      {
+        name: "Food and Nutrition",
+        aliases: ["food and nutrition", "food", "nutrition", "fn"],
+        alevel: null, olevel: "6065", oPapers: [1, 2]
+      },
+      {
+        name: "Computer Science (Legacy 9608)",
+        aliases: ["9608", "cs old"],
+        alevel: "9608", olevel: null, aPapers: [1, 2, 3, 4], maxYearA: 2021
+      }
+    ];
+
+    const STORAGE_KEY_DYNAMIC = "caie_dynamic_subjects_v3";
+    const STORAGE_KEY_LEVEL = "caie_selected_level_v1";
+    const STORAGE_KEY_MS = "caie_ms_enabled_v2";
+    const STORAGE_KEY_POPUP_DISMISSED = "caie_popup_notice_dismissed_v1";
+
+    let activeSubjects = [...CORE_SUBJECTS];
+    try {
+      const savedDynamic = JSON.parse(localStorage.getItem(STORAGE_KEY_DYNAMIC) || "[]");
+      savedDynamic.forEach(item => {
+        if (!activeSubjects.some(s => s.name === item.name)) {
+          activeSubjects.push(item);
+        }
+      });
+    } catch (e) {}
+
+    function saveDynamicSubject(subjectObj) {
+      if (!activeSubjects.some(s => s.name === subjectObj.name)) {
+        activeSubjects.push(subjectObj);
+      }
+      try {
+        const current = JSON.parse(localStorage.getItem(STORAGE_KEY_DYNAMIC) || "[]");
+        if (!current.some(s => s.name === subjectObj.name)) {
+          current.push(subjectObj);
+          localStorage.setItem(STORAGE_KEY_DYNAMIC, JSON.stringify(current));
+        }
+      } catch (e) {}
+    }
+
+    function findByCode(code4) {
+      const all = [...activeSubjects, ...EXTENDED_SUBJECTS_CATALOG];
+      for (const s of all) {
+        if (s.alevel === code4) return { subject: s, level: "alevel", code: code4 };
+        if (s.olevel === code4) return { subject: s, level: "olevel", code: code4 };
+      }
+      return null;
+    }
+
+    /********************************************************************
+     * 2. DAMERAU-LEVENSHTEIN + ANAGRAM & CONSONANT SKELETON ENGINE
+     ********************************************************************/
+    function consonantSkeleton(str) {
+      return str.toLowerCase().replace(/[^a-z]/g, "").replace(/[aeiou]/g, "");
+    }
+
+    function sortedLetters(str) {
+      return str.toLowerCase().replace(/[^a-z]/g, "").split("").sort().join("");
+    }
+
+    function damerauLevenshtein(a, b) {
+      if (a === b) return 0;
+      const lenA = a.length;
+      const lenB = b.length;
+      if (!lenA) return lenB;
+      if (!lenB) return lenA;
+
+      const dp = Array.from({ length: lenA + 1 }, () => new Array(lenB + 1).fill(0));
+      for (let i = 0; i <= lenA; i++) dp[i][0] = i;
+      for (let j = 0; j <= lenB; j++) dp[0][j] = j;
+
+      for (let i = 1; i <= lenA; i++) {
+        for (let j = 1; j <= lenB; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+          if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+            dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 0.6);
+          }
+        }
+      }
+      return dp[lenA][lenB];
+    }
+
+    function fuzzyScore(inputPhrase, targetPhrase) {
+      const a = inputPhrase.trim().toLowerCase();
+      const b = targetPhrase.trim().toLowerCase();
+      if (!a || !b) return 0;
+      if (a === b) return 1.0;
+
+      if (a.length >= 3 && a.length === b.length && a[0] === b[0] && sortedLetters(a) === sortedLetters(b)) {
+        return 0.94;
+      }
+
+      const skelA = consonantSkeleton(a);
+      const skelB = consonantSkeleton(b);
+      if (skelA.length >= 2 && Math.abs(a.length - b.length) <= 4) {
+        if (skelA === skelB) return 0.94;
+        if (skelA[0] === skelB[0] && sortedLetters(skelA) === sortedLetters(skelB)) return 0.90;
+      }
+
+      const dist = damerauLevenshtein(a, b);
+      const maxLen = Math.max(a.length, b.length);
+      const rawSim = 1 - dist / maxLen;
+
+      const skelDist = damerauLevenshtein(skelA, skelB);
+      const skelSim = skelB.length ? 1 - skelDist / Math.max(skelA.length, skelB.length) : 0;
+
+      if (a[0] === b[0] && skelSim >= 0.72) {
+        return Math.max(rawSim, skelSim * 0.9);
+      }
+      return rawSim;
+    }
+
+    /********************************************************************
+     * 3. SMART PARSER (STRICT A/O LEVEL SEPARATION + EXPLICIT CODE LOCK)
+     ********************************************************************/
+    let selectedToggleLevel = localStorage.getItem(STORAGE_KEY_LEVEL) || "none";
+    const savedMsPref = localStorage.getItem(STORAGE_KEY_MS);
+    let msEnabled = savedMsPref === null ? true : savedMsPref === "true";
+    let popupNoticeDismissed = localStorage.getItem(STORAGE_KEY_POPUP_DISMISSED) === "true";
+
+    function isPlausibleYear2(str) {
+      if (!/^\d{2}$/.test(str)) return false;
+      const n = parseInt(str, 10);
+      return n >= 2 && n <= 26;
+    }
+
+    function isPlausiblePV2(str, subjectObj, level) {
+      if (!/^\d{2}$/.test(str)) return false;
+      const p = parseInt(str[0], 10);
+      const v = parseInt(str[1], 10);
+      if (p < 1 || p > 6) return false;
+      if (subjectObj && level) {
+        const validPapers = level === "alevel" ? subjectObj.aPapers : subjectObj.oPapers;
+        if (Array.isArray(validPapers) && !validPapers.includes(p)) return false;
+      }
+      const isPracticalP3 = level === "alevel" && subjectObj && subjectObj.hasSciencePracticalP3 && p === 3;
+      const maxV = isPracticalP3 ? 5 : 3;
+      return v >= 1 && v <= maxV;
+    }
+
+    function parseSearchQuery(rawText, toggleLevel) {
+      const result = {
+        level: toggleLevel !== "none" ? toggleLevel : null,
+        levelAutoDetected: null,
+        levelLockedByCode: false,
+        levelFromToggleOnly: toggleLevel !== "none",
+        subjectName: null,
+        subjectObj: null,
+        subjectCode: null,
+        invalidCodeTyped: null,
+        dynamicallyLoaded: false,
+        session: null,
+        sessionLabel: null,
+        year: null,
+        yearShort: null,
+        paper: null,
+        variant: null
+      };
+
+      if (!rawText || !rawText.trim()) return result;
+
+      const normalized = rawText
+        .toLowerCase()
+        .replace(/(^|[\s/\\\-_,.:;()])m\s*\/\s*j(?=$|[\s/\\\-_,.:;()])/g, " mayjune ")
+        .replace(/(^|[\s/\\\-_,.:;()])o\s*\/\s*n(?=$|[\s/\\\-_,.:;()])/g, " octnov ")
+        .replace(/(^|[\s/\\\-_,.:;()])f\s*\/\s*m(?=$|[\s/\\\-_,.:;()])/g, " febmar ")
+        .replace(/[/\\-_,.:;()]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (!normalized) return result;
+
+      const tokens = normalized.split(" ");
+      const usedIndices = new Set();
+
+      // 1. Detect 4-digit Year or 4-digit Subject Code
+      tokens.forEach((tok, idx) => {
+        if (/^\d{4}$/.test(tok)) {
+          const num = parseInt(tok, 10);
+          if (num >= 2000 && num <= 2035 && !result.year) {
+            result.year = tok;
+            result.yearShort = tok.slice(2);
+            usedIndices.add(idx);
+          } else {
+            const found = findByCode(tok);
+            if (found) {
+              result.subjectObj = found.subject;
+              result.subjectName = found.subject.name;
+              result.subjectCode = found.code;
+              result.level = found.level;
+              result.levelAutoDetected = found.level;
+              result.levelLockedByCode = true;
+              result.levelFromToggleOnly = false;
+            } else {
+              result.invalidCodeTyped = tok;
+            }
+            usedIndices.add(idx);
+          }
+        }
+      });
+
+      // 2. Detect Explicit Level in query
+      for (let i = 0; i < tokens.length; i++) {
+        if (usedIndices.has(i)) continue;
+        const t = tokens[i];
+        const next = (!usedIndices.has(i + 1) && tokens[i + 1]) ? tokens[i + 1] : "";
+
+        if (t === "o" && next && fuzzyScore(next, "level") >= 0.65) {
+          if (!result.levelLockedByCode) {
+            result.level = "olevel";
+            result.levelAutoDetected = "olevel";
+          }
+          result.levelFromToggleOnly = false;
+          usedIndices.add(i);
+          usedIndices.add(i + 1);
+          i++;
+          continue;
+        }
+
+        if ((t === "a" || t === "as") && next && fuzzyScore(next, "level") >= 0.65) {
+          if (!result.levelLockedByCode) {
+            result.level = "alevel";
+            result.levelAutoDetected = "alevel";
+          }
+          result.levelFromToggleOnly = false;
+          usedIndices.add(i);
+          usedIndices.add(i + 1);
+          i++;
+          continue;
+        }
+
+        if (/^o(?:l|lvl|lev[a-z]*)$/i.test(t) || t === "igcse") {
+          if (!result.levelLockedByCode) {
+            result.level = "olevel";
+            result.levelAutoDetected = "olevel";
+          }
+          result.levelFromToggleOnly = false;
+          usedIndices.add(i);
+          continue;
+        }
+
+        if (/^a(?:s)?(?:l|lvl|lev[a-z]*)$/i.test(t) || t === "as") {
+          if (!result.levelLockedByCode) {
+            result.level = "alevel";
+            result.levelAutoDetected = "alevel";
+          }
+          result.levelFromToggleOnly = false;
+          usedIndices.add(i);
+          continue;
+        }
+      }
+
+      // 3. Detect Explicit Paper & Variant tokens
+      for (let i = 0; i < tokens.length; i++) {
+        if (usedIndices.has(i)) continue;
+        const t = tokens[i];
+        const next = (!usedIndices.has(i + 1) && tokens[i + 1]) ? tokens[i + 1] : "";
+
+        if (t === "qp" || t === "ms") {
+          usedIndices.add(i);
+          continue;
+        }
+
+        const pGlued = t.match(/^(?:p|paper|ppr|papr|paepr)(\d)$/i);
+        if (pGlued && !result.paper) {
+          result.paper = pGlued[1];
+          usedIndices.add(i);
+          continue;
+        }
+
+        const vGlued = t.match(/^(?:v|var|variant|vrnt|varint)(\d)$/i);
+        if (vGlued && !result.variant) {
+          result.variant = vGlued[1];
+          usedIndices.add(i);
+          continue;
+        }
+
+        const pvPrefixed = t.match(/^(?:p|qp|ms|paper)(\d)(\d)$/i);
+        if (pvPrefixed && !result.paper && !result.variant) {
+          result.paper = pvPrefixed[1];
+          result.variant = pvPrefixed[2];
+          usedIndices.add(i);
+          continue;
+        }
+
+        if (next && /^\d$/.test(next)) {
+          if (!result.paper && (t === "p" || fuzzyScore(t, "paper") >= 0.7)) {
+            result.paper = next;
+            usedIndices.add(i);
+            usedIndices.add(i + 1);
+            i++;
+            continue;
+          }
+          if (!result.variant && (t === "v" || t === "var" || fuzzyScore(t, "variant") >= 0.7)) {
+            result.variant = next;
+            usedIndices.add(i);
+            usedIndices.add(i + 1);
+            i++;
+            continue;
+          }
+        }
+
+        const wordNum = t.match(/^([a-z]+)(\d)$/);
+        if (wordNum) {
+          const wordPart = wordNum[1];
+          const digitPart = wordNum[2];
+          if (!result.paper && (wordPart === "p" || fuzzyScore(wordPart, "paper") >= 0.7)) {
+            result.paper = digitPart;
+            usedIndices.add(i);
+            continue;
+          }
+          if (!result.variant && (wordPart === "v" || wordPart === "var" || fuzzyScore(wordPart, "variant") >= 0.7)) {
+            result.variant = digitPart;
+            usedIndices.add(i);
+            continue;
+          }
+        }
+      }
+
+      // 4. Detect Glued Session+Year token (e.g. "s26", "w24", "m25")
+      let sessionTokenEndIndex = -1;
+      for (let i = 0; i < tokens.length; i++) {
+        if (usedIndices.has(i)) continue;
+        const syMatch = tokens[i].match(/^([swm])(\d{2})$/);
+        if (syMatch) {
+          const sChar = syMatch[1];
+          const y2 = syMatch[2];
+          result.session = sChar;
+          result.sessionLabel = sChar === "s" ? "May/June" : sChar === "w" ? "Oct/Nov" : "Feb/Mar";
+          result.year = "20" + y2;
+          result.yearShort = y2;
+          sessionTokenEndIndex = i;
+          usedIndices.add(i);
+        }
+      }
+
+      // 5. Detect Session
+      const sessionPatterns = [
+        { code: "s", label: "May/June", phrases: ["may june", "may jun", "my jne", "m j", "mayjune", "may", "june", "mj", "summer"] },
+        { code: "w", label: "Oct/Nov", phrases: ["oct nov", "october november", "o n", "octnov", "oct", "nov", "october", "november", "on", "winter"] },
+        { code: "m", label: "Feb/Mar", phrases: ["feb march", "feb mar", "february march", "f m", "febmar", "feb", "march", "spring"] }
+      ];
+
+      for (let i = 0; i < tokens.length - 1; i++) {
+        if (result.session) break;
+        if (usedIndices.has(i) || usedIndices.has(i + 1)) continue;
+        if (/^\d+$/.test(tokens[i]) || /^\d+$/.test(tokens[i + 1])) continue;
+        const pair = `${tokens[i]} ${tokens[i + 1]}`;
+        for (const sGroup of sessionPatterns) {
+          for (const phrase of sGroup.phrases) {
+            if (phrase.includes(" ")) {
+              const threshold = phrase.length <= 3 ? 1.0 : 0.74;
+              if (fuzzyScore(pair, phrase) >= threshold) {
+                result.session = sGroup.code;
+                result.sessionLabel = sGroup.label;
+                usedIndices.add(i);
+                usedIndices.add(i + 1);
+                sessionTokenEndIndex = i + 1;
+                break;
+              }
+            }
+          }
+          if (result.session) break;
+        }
+      }
+
+      for (let i = 0; i < tokens.length; i++) {
+        if (result.session) break;
+        if (usedIndices.has(i)) continue;
+        const tok = tokens[i];
+        if (/^\d+$/.test(tok)) continue;
+        for (const sGroup of sessionPatterns) {
+          for (const phrase of sGroup.phrases) {
+            if (!phrase.includes(" ")) {
+              const threshold = phrase.length <= 2 ? 1.0 : 0.76;
+              if (fuzzyScore(tok, phrase) >= threshold) {
+                result.session = sGroup.code;
+                result.sessionLabel = sGroup.label;
+                usedIndices.add(i);
+                sessionTokenEndIndex = i;
+                break;
+              }
+            }
+          }
+          if (result.session) break;
+        }
+      }
+
+      // Context-aware disambiguation for "fm" (Further Maths vs Feb/March)
+      for (let i = 0; i < tokens.length; i++) {
+        if (usedIndices.has(i)) continue;
+        if (tokens[i] === "fm") {
+          if (result.subjectObj && !result.session) {
+            result.session = "m";
+            result.sessionLabel = "Feb/Mar";
+            sessionTokenEndIndex = i;
+            usedIndices.add(i);
+          } else if (result.session && !result.subjectObj) {
+            const fmSubj = CORE_SUBJECTS[0];
+            result.subjectObj = fmSubj;
+            result.subjectName = fmSubj.name;
+            result.level = "alevel";
+            result.levelAutoDetected = "alevel";
+            result.subjectCode = fmSubj.alevel;
+            usedIndices.add(i);
+          }
+        }
+      }
+
+      // 6. Detect Subject with Damerau-Levenshtein + Multi-Word Coverage Priority
+      if (!result.invalidCodeTyped) {
+        const wordEntries = [];
+        tokens.forEach((tok, idx) => {
+          if (!usedIndices.has(idx) && !/^\d+$/.test(tok)) {
+            wordEntries.push({ tok, idx });
+          }
+        });
+
+        if (wordEntries.length > 0 && !result.subjectObj) {
+          const remainingWords = wordEntries.map(e => e.tok);
+          const fullRemainingPhrase = remainingWords.join(" ");
+
+          let bestMatch = null;
+          let bestEffectiveScore = 0;
+          let bestMatchedIndices = [];
+          let fromExtended = false;
+
+          const candidates = [
+            ...activeSubjects.map(s => ({ s, extended: false })),
+            ...EXTENDED_SUBJECTS_CATALOG.map(s => ({ s, extended: true }))
+          ];
+
+          for (const { s, extended } of candidates) {
+            for (const alias of s.aliases) {
+              const aliasWordCount = alias.split(" ").length;
+
+              const fullSim = fuzzyScore(fullRemainingPhrase, alias);
+              if (fullSim >= 0.72) {
+                const effective = fullSim + Math.min(aliasWordCount - 1, 2) * 0.12 + 0.1;
+                if (effective > bestEffectiveScore) {
+                  bestEffectiveScore = effective;
+                  bestMatch = s;
+                  bestMatchedIndices = wordEntries.map(e => e.idx);
+                  fromExtended = extended;
+                }
+              }
+
+              const maxN = Math.min(3, wordEntries.length);
+              for (let n = maxN; n >= 1; n--) {
+                for (let start = 0; start <= wordEntries.length - n; start++) {
+                  const subSlice = wordEntries.slice(start, start + n);
+                  const subPhrase = subSlice.map(e => e.tok).join(" ");
+                  const sim = fuzzyScore(subPhrase, alias);
+                  if (sim >= 0.72) {
+                    const coverageRatio = n / wordEntries.length;
+                    const multiWordBonus = (n >= 2 && aliasWordCount >= 2) ? 0.18 : 0;
+                    const effective = sim + coverageRatio * 0.1 + multiWordBonus;
+                    if (effective > bestEffectiveScore) {
+                      bestEffectiveScore = effective;
+                      bestMatch = s;
+                      bestMatchedIndices = subSlice.map(e => e.idx);
+                      fromExtended = extended;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if (bestMatch) {
+            result.subjectObj = bestMatch;
+            result.subjectName = bestMatch.name;
+            bestMatchedIndices.forEach(idx => usedIndices.add(idx));
+
+            if (fromExtended) {
+              saveDynamicSubject(bestMatch);
+              result.dynamicallyLoaded = true;
+            }
+
+            if (bestMatch.alevel && !bestMatch.olevel) {
+              if (!result.level || result.levelFromToggleOnly) {
+                result.level = "alevel";
+                result.levelAutoDetected = "alevel";
+              }
+            } else if (bestMatch.olevel && !bestMatch.alevel) {
+              if (!result.level || result.levelFromToggleOnly) {
+                result.level = "olevel";
+                result.levelAutoDetected = "olevel";
+              }
+            }
+          }
+        }
+      }
+
+      if (result.subjectObj && !result.subjectCode) {
+        if (result.level === "alevel") {
+          result.subjectCode = result.subjectObj.alevel;
+        } else if (result.level === "olevel") {
+          result.subjectCode = result.subjectObj.olevel;
+        }
+      }
+
+      if (!result.session) {
+        for (let i = 0; i < tokens.length; i++) {
+          if (!usedIndices.has(i) && tokens[i] === "fm") {
+            result.session = "m";
+            result.sessionLabel = "Feb/Mar";
+            sessionTokenEndIndex = i;
+            usedIndices.add(i);
+            break;
+          }
+        }
+      }
+
+      // 7. Context-Aware Disambiguation for 2-Digit Numbers
+      const bareTwoDigitIndices = [];
+      for (let i = 0; i < tokens.length; i++) {
+        if (!usedIndices.has(i) && /^\d{2}$/.test(tokens[i])) {
+          bareTwoDigitIndices.push(i);
+        }
+      }
+
+      if (bareTwoDigitIndices.length >= 2) {
+        const idxA = bareTwoDigitIndices[0];
+        const idxB = bareTwoDigitIndices[1];
+        const tokA = tokens[idxA];
+        const tokB = tokens[idxB];
+
+        const aIsPV = isPlausiblePV2(tokA, result.subjectObj, result.level);
+        const bIsYear = isPlausibleYear2(tokB);
+        const aIsYear = isPlausibleYear2(tokA);
+        const bIsPV = isPlausiblePV2(tokB, result.subjectObj, result.level);
+
+        let scoreAasPV = (aIsPV ? 4 : 0) + (bIsYear ? 4 : 0);
+        let scoreAasYear = (aIsYear ? 4 : 0) + (bIsPV ? 4 : 0);
+
+        if (sessionTokenEndIndex !== -1) {
+          if (idxA === sessionTokenEndIndex + 1) {
+            scoreAasYear += 3;
+          } else if (idxB === sessionTokenEndIndex + 1) {
+            scoreAasPV += 3;
+          } else if (idxA < sessionTokenEndIndex && idxB < sessionTokenEndIndex) {
+            scoreAasPV += 2;
+          }
+        }
+
+        if (scoreAasYear > scoreAasPV) {
+          if (!result.year) {
+            result.year = "20" + tokA;
+            result.yearShort = tokA;
+          }
+          if (!result.paper && !result.variant) {
+            result.paper = tokB[0];
+            result.variant = tokB[1];
+          }
+        } else {
+          if (!result.paper && !result.variant) {
+            result.paper = tokA[0];
+            result.variant = tokA[1];
+          }
+          if (!result.year) {
+            result.year = "20" + tokB;
+            result.yearShort = tokB;
+          }
+        }
+        usedIndices.add(idxA);
+        usedIndices.add(idxB);
+      } else if (bareTwoDigitIndices.length === 1) {
+        const idx = bareTwoDigitIndices[0];
+        const tok = tokens[idx];
+        if (result.year && !result.paper && !result.variant) {
+          result.paper = tok[0];
+          result.variant = tok[1];
+          usedIndices.add(idx);
+        } else if (!result.year && (result.paper || result.variant)) {
+          result.year = "20" + tok;
+          result.yearShort = tok;
+          usedIndices.add(idx);
+        } else if (sessionTokenEndIndex !== -1 && idx === sessionTokenEndIndex + 1 && isPlausibleYear2(tok)) {
+          result.year = "20" + tok;
+          result.yearShort = tok;
+          usedIndices.add(idx);
+        } else if (isPlausibleYear2(tok) && !isPlausiblePV2(tok, result.subjectObj, result.level)) {
+          result.year = "20" + tok;
+          result.yearShort = tok;
+          usedIndices.add(idx);
+        } else if (isPlausiblePV2(tok, result.subjectObj, result.level) && !isPlausibleYear2(tok)) {
+          result.paper = tok[0];
+          result.variant = tok[1];
+          usedIndices.add(idx);
+        } else if (!result.year) {
+          result.year = "20" + tok;
+          result.yearShort = tok;
+          usedIndices.add(idx);
+        }
+      }
+
+      return result;
+    }
+
+    /********************************************************************
+     * 4. CAIE SYLLABUS, PAPER, VARIANT, SESSION & YEAR VALIDATOR
+     ********************************************************************/
+    function validateCaiePaperExistence(parsed) {
+      const errors = [];
+      const invalidPills = new Set();
+
+      const yearNum = parsed.year ? parseInt(parsed.year, 10) : null;
+      const paperNum = parsed.paper ? parseInt(parsed.paper, 10) : null;
+      const variantNum = parsed.variant ? parseInt(parsed.variant, 10) : null;
+
+      if (yearNum !== null) {
+        if (yearNum < 2002 || yearNum > 2026) {
+          errors.push(`Year ${yearNum} out of range (2002–2026)`);
+          invalidPills.add("year");
+        }
+        if (parsed.subjectObj && parsed.level === "alevel") {
+          if (parsed.subjectObj.minYearA && yearNum < parsed.subjectObj.minYearA) {
+            errors.push(`${parsed.subjectObj.name} (${parsed.subjectObj.alevel}) started in ${parsed.subjectObj.minYearA} (use 9608 for older papers)`);
+            invalidPills.add("year");
+          }
+          if (parsed.subjectObj.maxYearA && yearNum > parsed.subjectObj.maxYearA) {
+            errors.push(`${parsed.subjectObj.name} (${parsed.subjectObj.alevel}) ended in ${parsed.subjectObj.maxYearA} (use 9618 for 2021+)`);
+            invalidPills.add("year");
+          }
+        }
+      }
+
+      if (paperNum !== null && parsed.subjectObj && parsed.level) {
+        const validPapers = parsed.level === "alevel" ? parsed.subjectObj.aPapers : parsed.subjectObj.oPapers;
+        if (Array.isArray(validPapers) && !validPapers.includes(paperNum)) {
+          const code = parsed.subjectCode || (parsed.level === "alevel" ? parsed.subjectObj.alevel : parsed.subjectObj.olevel);
+          errors.push(`Paper ${paperNum} doesn't exist for ${parsed.subjectObj.name} (${code}) — valid: P${validPapers.join(", P")}`);
+          invalidPills.add("paper");
+        }
+      } else if (paperNum !== null && (paperNum < 1 || paperNum > 6)) {
+        errors.push(`Paper ${paperNum} does not exist (only Papers 1–6)`);
+        invalidPills.add("paper");
+      }
+
+      if (variantNum !== null) {
+        const isSciencePracticalP3 =
+          parsed.level === "alevel" &&
+          parsed.subjectObj &&
+          parsed.subjectObj.hasSciencePracticalP3 &&
+          paperNum === 3;
+
+        const maxAllowedVariant = isSciencePracticalP3 ? 5 : 3;
+
+        if (variantNum < 1 || variantNum > maxAllowedVariant) {
+          const allowedList = isSciencePracticalP3 ? "1–5" : "1, 2, or 3";
+          errors.push(`Variant ${variantNum} doesn't exist (only Variants ${allowedList})`);
+          invalidPills.add("variant");
+        } else if (parsed.session === "m") {
+          if (parsed.level === "olevel") {
+            errors.push(`Feb/March session doesn't exist for O-Level`);
+            invalidPills.add("session");
+          } else if (yearNum !== null && yearNum < 2016) {
+            errors.push(`Feb/March series started in 2016`);
+            invalidPills.add("session");
+          } else {
+            const validFebMarVariants = isSciencePracticalP3 ? [2, 3, 4] : [2];
+            if (!validFebMarVariants.includes(variantNum)) {
+              errors.push(`Feb/March only has Variant 2 (Paper ${paperNum || ""}2)`);
+              invalidPills.add("variant");
+            }
+          }
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        invalidPills
+      };
+    }
+
+    /********************************************************************
+     * 5. UI CONTROLS, POPUP NOTICE, UMAMI EVENTS & RED FLASH
+     ********************************************************************/
+    const levelSelector = document.getElementById("levelSelector");
+    const levelBtns = document.querySelectorAll(".seg-btn");
+    const msToggle = document.getElementById("msToggle");
+    const searchShell = document.getElementById("searchShell");
+    const searchInput = document.getElementById("searchInput");
+    const blurMirror = document.getElementById("blurMirror");
+    const placeholderText = document.getElementById("placeholderText");
+    const resolvedBadge = document.getElementById("resolvedBadge");
+    const enterBtn = document.getElementById("enterBtn");
+    const popupNotice = document.getElementById("popupNotice");
+    const dismissPopupNoticeBtn = document.getElementById("dismissPopupNoticeBtn");
+    const missingPillsStage = document.getElementById("missingPillsStage");
+
+    let previousValue = "";
+
+    function trackUmamiEvent(eventName, eventData) {
+      try {
+        if (typeof window.umami !== "undefined" && typeof window.umami.track === "function") {
+          window.umami.track(eventName, eventData);
+        }
+      } catch (e) {}
+    }
+
+    function setVisualLevelSlider(visualLevel) {
+      levelSelector.setAttribute("data-active", visualLevel);
+      levelBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.level === visualLevel);
+      });
+    }
+
+    function syncMsUI() {
+      msToggle.setAttribute("data-ms", msEnabled ? "yes" : "no");
+      msToggle.setAttribute("aria-checked", String(msEnabled));
+      popupNotice.classList.toggle("visible", msEnabled && !popupNoticeDismissed);
+    }
+
+    setVisualLevelSlider(selectedToggleLevel);
+    syncMsUI();
+
+    dismissPopupNoticeBtn.addEventListener("click", () => {
+      popupNoticeDismissed = true;
+      localStorage.setItem(STORAGE_KEY_POPUP_DISMISSED, "true");
+      popupNotice.classList.remove("visible");
+      searchInput.focus();
+    });
+
+    levelBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectedToggleLevel = btn.dataset.level;
+        localStorage.setItem(STORAGE_KEY_LEVEL, selectedToggleLevel);
+        setVisualLevelSlider(selectedToggleLevel);
+        clearMissingPills();
+        updateLiveState();
+        searchInput.focus();
+      });
+    });
+
+    msToggle.addEventListener("click", e => {
+      const choiceEl = e.target.closest("[data-choice]");
+      if (choiceEl) {
+        msEnabled = choiceEl.dataset.choice === "yes";
+      } else {
+        msEnabled = !msEnabled;
+      }
+      localStorage.setItem(STORAGE_KEY_MS, String(msEnabled));
+      syncMsUI();
+      updateLiveState();
+      searchInput.focus();
+    });
+
+    msToggle.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        msEnabled = !msEnabled;
+        localStorage.setItem(STORAGE_KEY_MS, String(msEnabled));
+        syncMsUI();
+        updateLiveState();
+      }
+    });
+
+    searchInput.addEventListener("focus", () => searchShell.classList.add("focused"));
+    searchInput.addEventListener("blur", () => searchShell.classList.remove("focused"));
+    searchInput.addEventListener("scroll", () => {
+      blurMirror.scrollLeft = searchInput.scrollLeft;
+    });
+
+    function renderBlurMirror(newValue) {
+      if (!newValue) {
+        blurMirror.innerHTML = "";
+        blurMirror.appendChild(placeholderText);
+        placeholderText.style.display = "inline";
+        previousValue = "";
+        return;
+      }
+
+      if (placeholderText.parentNode === blurMirror) {
+        blurMirror.removeChild(placeholderText);
+      }
+
+      const existingSpans = Array.from(blurMirror.querySelectorAll(".char-span"));
+      let commonPrefix = 0;
+      const minLen = Math.min(previousValue.length, newValue.length);
+      while (commonPrefix < minLen && previousValue[commonPrefix] === newValue[commonPrefix]) {
+        commonPrefix++;
+      }
+
+      while (existingSpans.length > commonPrefix) {
+        const popped = existingSpans.pop();
+        if (popped && popped.parentNode === blurMirror) {
+          blurMirror.removeChild(popped);
+        }
+      }
+
+      for (let i = commonPrefix; i < newValue.length; i++) {
+        const span = document.createElement("span");
+        span.className = "char-span animate-in";
+        span.textContent = newValue[i];
+        blurMirror.appendChild(span);
+      }
+
+      previousValue = newValue;
+      blurMirror.scrollLeft = searchInput.scrollLeft;
+    }
+
+    function updatePill(key, text, isDetected, isInvalid) {
+      const pill = document.querySelector(`.pill[data-pill="${key}"]`);
+      if (!pill) return;
+      pill.querySelector(".pill-val").textContent = text || "—";
+      pill.classList.remove("missing-alert");
+      pill.classList.toggle("detected", Boolean(isDetected) && !isInvalid);
+      pill.classList.toggle("invalid", Boolean(isInvalid));
+    }
+
+    function updateLiveState() {
+      const raw = searchInput.value.trim();
+      const parsed = parseSearchQuery(raw, selectedToggleLevel);
+      const validation = validateCaiePaperExistence(parsed);
+
+      const activeVisualSliderLevel = parsed.levelAutoDetected || selectedToggleLevel;
+      setVisualLevelSlider(activeVisualSliderLevel);
+
+      const levelDisplay =
+        parsed.level === "alevel" ? "A-Level" :
+        parsed.level === "olevel" ? "O-Level" : null;
+
+      const resolvedCode = parsed.subjectCode || (
+        parsed.level === "alevel"
+          ? parsed.subjectObj?.alevel
+          : parsed.level === "olevel"
+            ? parsed.subjectObj?.olevel
+            : null
+      );
+
+      const subjDisplay = resolvedCode && parsed.subjectName
+        ? `${parsed.subjectName} (${resolvedCode})`
+        : parsed.subjectName
+          ? `${parsed.subjectName}`
+          : parsed.invalidCodeTyped
+            ? `Unknown (${parsed.invalidCodeTyped})`
+            : null;
+
+      updatePill("level", levelDisplay, Boolean(levelDisplay), validation.invalidPills.has("level"));
+      updatePill("subject", subjDisplay, Boolean(parsed.subjectName), Boolean(parsed.invalidCodeTyped));
+      updatePill("session", parsed.sessionLabel, Boolean(parsed.session), validation.invalidPills.has("session"));
+      updatePill("year", parsed.year, Boolean(parsed.year), validation.invalidPills.has("year"));
+      updatePill("paper", parsed.paper ? `Paper ${parsed.paper}` : null, Boolean(parsed.paper), validation.invalidPills.has("paper"));
+      updatePill("variant", parsed.variant ? `Variant ${parsed.variant}` : null, Boolean(parsed.variant), validation.invalidPills.has("variant"));
+
+      if (resolvedCode && parsed.session && parsed.yearShort && parsed.paper && parsed.variant && validation.isValid) {
+        const suffix = msEnabled ? "qp+ms" : "qp";
+        resolvedBadge.textContent = `${resolvedCode}_${parsed.session}${parsed.yearShort}_${suffix}_${parsed.paper}${parsed.variant}`;
+        resolvedBadge.classList.add("visible");
+      } else {
+        resolvedBadge.classList.remove("visible");
+      }
+    }
+
+    function clearMissingPills() {
+      missingPillsStage.innerHTML = "";
+    }
+
+    function renderBlurPills(pillItems, pillClass = "") {
+      clearMissingPills();
+      pillItems.forEach((itemHtml, idx) => {
+        const pill = document.createElement("div");
+        pill.className = `blur-pill ${pillClass}`.trim();
+        pill.style.animationDelay = `${idx * 45}ms`;
+        pill.innerHTML = itemHtml;
+        missingPillsStage.appendChild(pill);
+      });
+    }
+
+    function flagMissingTagPills(keys) {
+      keys.forEach(k => {
+        const pill = document.querySelector(`.pill[data-pill="${k}"]`);
+        if (pill) {
+          pill.classList.remove("missing-alert");
+          void pill.offsetWidth;
+          pill.classList.add("missing-alert");
+        }
+      });
+    }
+
+    function triggerErrorFeedback() {
+      searchShell.classList.remove("error-shake");
+      document.body.classList.remove("bg-error-flash");
+      void searchShell.offsetWidth;
+      searchShell.classList.add("error-shake");
+      document.body.classList.add("bg-error-flash");
+    }
+
+    searchInput.addEventListener("input", () => {
+      renderBlurMirror(searchInput.value);
+      clearMissingPills();
+      updateLiveState();
+    });
+
+    function openExternalTab(httpsUrl) {
+      const win = window.open(httpsUrl, "_blank", "noopener,noreferrer");
+      return Boolean(win);
+    }
+
+    function executeSearch() {
+      const raw = searchInput.value.trim();
+      if (!raw) {
+        triggerErrorFeedback();
+        flagMissingTagPills(["level", "subject", "session", "year", "paper", "variant"]);
+        renderBlurPills(["Enter your paper details above to open the PDF"]);
+        return;
+      }
+
+      const parsed = parseSearchQuery(raw, selectedToggleLevel);
+
+      if (parsed.invalidCodeTyped) {
+        triggerErrorFeedback();
+        trackUmamiEvent("Unknown Code Typed", { query: raw, code: parsed.invalidCodeTyped });
+        renderBlurPills([
+          `Unknown code ${parsed.invalidCodeTyped} <button type="button" id="allowCustomCodeBtn">Use ${parsed.invalidCodeTyped} anyway</button>`
+        ]);
+        const btn = document.getElementById("allowCustomCodeBtn");
+        if (btn) {
+          btn.onclick = () => {
+            saveDynamicSubject({
+              name: `Syllabus ${parsed.invalidCodeTyped}`,
+              aliases: [parsed.invalidCodeTyped],
+              alevel: parsed.invalidCodeTyped,
+              olevel: parsed.invalidCodeTyped,
+              aPapers: [1, 2, 3, 4, 5, 6],
+              oPapers: [1, 2, 3, 4]
+            });
+            executeSearch();
+          };
+        }
+        return;
+      }
+
+      const missingKeys = [];
+      const missingNames = [];
+      if (!parsed.level) { missingKeys.push("level"); missingNames.push("Level"); }
+      if (!parsed.subjectObj) { missingKeys.push("subject"); missingNames.push("Subject"); }
+      if (!parsed.session) { missingKeys.push("session"); missingNames.push("Session"); }
+      if (!parsed.year) { missingKeys.push("year"); missingNames.push("Year"); }
+      if (!parsed.paper) { missingKeys.push("paper"); missingNames.push("Paper"); }
+      if (!parsed.variant) { missingKeys.push("variant"); missingNames.push("Variant"); }
+
+      if (missingKeys.length > 0) {
+        triggerErrorFeedback();
+        flagMissingTagPills(missingKeys);
+        trackUmamiEvent("Incomplete Search", { query: raw, missing: missingNames.join(",") });
+        renderBlurPills([`Forgot to specify: ${missingNames.join(", ")}`]);
+        return;
+      }
+
+      const resolvedCode = parsed.subjectCode || (
+        parsed.level === "alevel" ? parsed.subjectObj.alevel : parsed.subjectObj.olevel
+      );
+
+      if (!resolvedCode) {
+        const availableLevel = parsed.subjectObj.alevel ? "A-Level" : "O-Level";
+        triggerErrorFeedback();
+        flagMissingTagPills(["level"]);
+        renderBlurPills([`${parsed.subjectObj.name} is only offered in ${availableLevel}`]);
+        return;
+      }
+
+      const validation = validateCaiePaperExistence(parsed);
+      if (!validation.isValid) {
+        triggerErrorFeedback();
+        trackUmamiEvent("Invalid Paper Attempt", { query: raw, error: validation.errors[0] });
+        renderBlurPills(validation.errors);
+        return;
+      }
+
+      const fileStem = `${resolvedCode}_${parsed.session}${parsed.yearShort}`;
+      const pv = `${parsed.paper}${parsed.variant}`;
+      const qpUrl = `${PAPACAMBRIDGE_BASE}/${fileStem}_qp_${pv}.pdf`;
+      const msUrl = `${PAPACAMBRIDGE_BASE}/${fileStem}_ms_${pv}.pdf`;
+
+      // Log successful paper fetch to Umami
+      trackUmamiEvent("Paper Fetched", {
+        subject: `${parsed.subjectObj.name} (${resolvedCode})`,
+        level: parsed.level === "alevel" ? "A-Level" : "O-Level",
+        paperCode: `${fileStem}_${pv}`,
+        includeMS: msEnabled ? "yes" : "no"
+      });
+
+      if (msEnabled) {
+        const qpOpened = openExternalTab(qpUrl);
+        const msOpened = openExternalTab(msUrl);
+
+        if (!qpOpened || !msOpened) {
+          // Unhide the popup notice and give direct 1-click fallback buttons
+          popupNoticeDismissed = false;
+          popupNotice.classList.add("visible");
+          renderBlurPills([
+            `<span>Browser blocked the 2nd tab — allow pop-ups in your address bar, or click:</span>
+             <a href="${qpUrl}" target="_blank" rel="noopener noreferrer">Open QP (${fileStem}_qp_${pv}) ↗</a>
+             <a href="${msUrl}" target="_blank" rel="noopener noreferrer">Open MS (${fileStem}_ms_${pv}) ↗</a>`
+          ], "neutral-pill");
+        } else {
+          clearMissingPills();
+        }
+      } else {
+        const qpOpened = openExternalTab(qpUrl);
+        if (!qpOpened) {
+          renderBlurPills([
+            `<a href="${qpUrl}" target="_blank" rel="noopener noreferrer">Open ${fileStem}_qp_${pv}.pdf ↗</a>`
+          ], "neutral-pill");
+        } else {
+          clearMissingPills();
+        }
+      }
+    }
+
+    searchInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        executeSearch();
+      }
+    });
+
+    enterBtn.addEventListener("click", executeSearch);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      updateLiveState();
+      searchInput.focus();
+    });
+  </script>
+</body>
+</html>
