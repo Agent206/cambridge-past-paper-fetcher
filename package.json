@@ -1,0 +1,9 @@
+{
+  "name": "cambridge-past-paper-fetcher",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"const http=require('http'),fs=require('fs');http.createServer((req,res)=>{fs.readFile('index.html',(e,d)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(d)})}).listen(3000,'0.0.0.0',()=>console.log('Ready on 3000'))\"",
+    "build": "echo 'Static build complete'"
+  }
+}
