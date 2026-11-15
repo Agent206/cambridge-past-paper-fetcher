@@ -10,14 +10,29 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var savedTheme = localStorage.getItem("caie_theme_v1");
+        if (savedTheme === "dark" || savedTheme === "light") {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <style>
     :root {
       --bg: #ffffff;
       --surface: #f4f4f5;
+      --elevated: #ffffff;
+      --subtle-bg: #fafafa;
+      --thumb-bg: #ffffff;
       --text: #18181b;
       --text-secondary: #52525b;
       --text-muted: #a1a1aa;
       --border: #e4e4e7;
+      --focus-border: #a1a1aa;
+      --selection-bg: rgba(24, 24, 27, 0.12);
       --ring-focus: rgba(24, 24, 27, 0.05);
       --glow-focus: rgba(99, 102, 241, 0.12);
       --ms-yes-bg: #10b981;
@@ -30,6 +45,32 @@
       --error-border: #450a0a;
       --error-text: #fef2f2;
       --error-flash: #881313;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #09090b;
+      --surface: #18181b;
+      --elevated: #121215;
+      --subtle-bg: #121215;
+      --thumb-bg: #27272a;
+      --text: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-muted: #71717a;
+      --border: #27272a;
+      --focus-border: #52525b;
+      --selection-bg: rgba(250, 250, 250, 0.18);
+      --ring-focus: rgba(250, 250, 250, 0.08);
+      --glow-focus: rgba(99, 102, 241, 0.24);
+      --ms-yes-bg: #059669;
+      --ms-no-bg: #b91c1c;
+      --tick-bg: rgba(16, 185, 129, 0.15);
+      --tick-border: rgba(52, 211, 153, 0.42);
+      --tick-text: #6ee7b7;
+      --error-bg: #991b1b;
+      --error-border: #ef4444;
+      --error-text: #fef2f2;
+      --error-flash: #450a0a;
+      color-scheme: dark;
     }
 
     * {
@@ -51,6 +92,7 @@
       align-items: center;
       padding: 28px;
       overflow-x: hidden;
+      transition: background-color 0.24s ease, color 0.24s ease;
     }
 
     /* Full-Screen Angry Crimson Flash + Coordinated Blur & Contrast Inversion */
@@ -60,13 +102,13 @@
 
     @keyframes fullRedFlash {
       0% {
-        background-color: #ffffff;
+        background-color: var(--bg);
       }
       18% {
         background-color: var(--error-flash);
       }
       100% {
-        background-color: #ffffff;
+        background-color: var(--bg);
       }
     }
 
@@ -164,12 +206,12 @@
       left: 4px;
       width: calc((100% - 8px) / 3);
       height: calc(100% - 8px);
-      background: #ffffff;
+      background: var(--thumb-bg);
       border-radius: 999px;
       box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.08),
-        0 1px 1px rgba(0, 0, 0, 0.04);
-      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        0 1px 3px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.06);
+      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.24s ease;
       pointer-events: none;
       z-index: 1;
     }
@@ -283,7 +325,7 @@
       width: 100%;
       height: 74px;
       border-radius: 999px;
-      background: #ffffff;
+      background: var(--elevated);
       border: 1px solid var(--border);
       box-shadow:
         0 2px 6px rgba(0, 0, 0, 0.02),
@@ -292,13 +334,14 @@
       align-items: center;
       padding: 0 22px 0 28px;
       transition:
+        background-color 0.24s ease,
         border-color 0.25s ease,
         box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
         transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .search-shell.focused {
-      border-color: #a1a1aa;
+      border-color: var(--focus-border);
       box-shadow:
         0 0 0 5px var(--ring-focus),
         0 14px 36px -8px var(--glow-focus),
@@ -401,7 +444,7 @@
     }
 
     .real-input::selection {
-      background: rgba(24, 24, 27, 0.12);
+      background: var(--selection-bg);
       color: transparent;
     }
 
@@ -452,7 +495,7 @@
     .enter-keycap:hover {
       background: var(--text);
       border-color: var(--text);
-      color: #ffffff;
+      color: var(--bg);
     }
 
     /* Live Checkmark Tags Below Search Bar */
@@ -475,8 +518,34 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 320px;
+      overflow: hidden;
+      white-space: nowrap;
+      transform-origin: left center;
+      transition:
+        background-color 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+        max-width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        padding 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+        margin 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+        border-width 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
       user-select: none;
+    }
+
+    .pill.pill-collapsed {
+      max-width: 0px;
+      padding-left: 0px;
+      padding-right: 0px;
+      margin-left: -9px;
+      border-width: 0px;
+      opacity: 0;
+      filter: blur(6px);
+      transform: scale(0.85) translateY(-2px);
+      pointer-events: none;
     }
 
     .pill-check {
@@ -518,7 +587,7 @@
       margin-left: 6px;
       padding: 9px 15px;
       border-radius: 14px;
-      background: #fafafa;
+      background: var(--subtle-bg);
       border: 1px solid var(--border);
       color: var(--text-secondary);
       font-size: 13px;
@@ -550,7 +619,7 @@
     .popup-dismiss-btn {
       appearance: none;
       border: 1px solid var(--border);
-      background: #ffffff;
+      background: var(--elevated);
       color: var(--text);
       font-family: inherit;
       font-size: 12px;
@@ -565,7 +634,7 @@
     .popup-dismiss-btn:hover {
       background: var(--text);
       border-color: var(--text);
-      color: #ffffff;
+      color: var(--bg);
     }
 
     /* Validation / Error / Fallback Notice Below Tags */
@@ -627,6 +696,7 @@
     }
 
     .blur-pill.neutral-pill a {
+      background: var(--elevated);
       color: var(--text);
       border-color: var(--border);
     }
@@ -655,7 +725,7 @@
     .github-fab:hover {
       background: var(--text);
       border-color: var(--text);
-      color: #ffffff;
+      color: var(--bg);
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     }
@@ -707,7 +777,7 @@
       .parsed-pills,
       .missing-pills-stage,
       .popup-notice {
-        padding-left: 0;
+      padding-left: 0;
         margin-left: 0;
       }
       .github-fab {
@@ -717,24 +787,691 @@
         font-size: 12px;
       }
     }
+
+    /* Mode Selector (Papers | Syllabus) */
+    .controls-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mode-segmented {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      height: 40px;
+      min-width: 196px;
+      user-select: none;
+    }
+
+    .mode-thumb {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: calc((100% - 8px) / 2);
+      height: calc(100% - 8px);
+      background: var(--text);
+      border-radius: 999px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .mode-segmented[data-mode="paper"] .mode-thumb {
+      transform: translateX(0%);
+    }
+    .mode-segmented[data-mode="syllabus"] .mode-thumb {
+      transform: translateX(100%);
+    }
+
+    .mode-btn {
+      position: relative;
+      z-index: 2;
+      appearance: none;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 999px;
+      transition: color 0.2s ease;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      color: var(--bg);
+      font-weight: 600;
+    }
+
+    .ms-group.dimmed {
+      opacity: 0.38;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    /* Automatic Live Schedule & Syllabus Stage */
+    .live-info-stage {
+      margin-top: 14px;
+      padding-left: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .schedule-card {
+      background: var(--subtle-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+      animation: pillBlurIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .schedule-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .schedule-comp-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .schedule-dur-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .schedule-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .var-chip {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--elevated);
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .var-chip:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    .var-chip.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+      font-weight: 600;
+    }
+
+    .syl-quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 4px 11px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: all 0.16s ease;
+    }
+
+    .syl-quick-link:hover {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 8px;
+    }
+
+    .schedule-slot {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .schedule-slot.matched-series {
+      background: var(--tick-bg);
+      border-color: var(--tick-border);
+    }
+
+    .slot-series-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .schedule-slot.matched-series .slot-series-row {
+      color: var(--tick-text);
+    }
+
+    .slot-session-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .slot-date-main {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .slot-countdown {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 600px) {
+      .live-info-stage {
+        padding-left: 0;
+      }
+    }
+
+    /* Top-Right Action Bar (Theme Toggle + Help Button) */
+    .top-right-actions {
+      position: fixed;
+      top: 22px;
+      right: 24px;
+      z-index: 45;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-fab,
+    .help-fab {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 15px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .theme-fab:hover,
+    .help-fab:hover {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+    }
+
+    .theme-fab svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .theme-icon-sun {
+      display: none;
+    }
+
+    html[data-theme="dark"] .theme-icon-sun {
+      display: inline-block;
+    }
+
+    html[data-theme="dark"] .theme-icon-moon {
+      display: none;
+    }
+
+    .help-fab-badge {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .help-fab:hover .help-fab-badge {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Multi-Color Diagonal Sliding Cascade Overlay + Black Instructions Page */
+    .help-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .help-overlay.open {
+      pointer-events: auto;
+    }
+
+    .color-slab {
+      position: absolute;
+      top: 0;
+      left: -15vw;
+      width: 130vw;
+      height: 100%;
+      transform: translate3d(148vw, 0, 0) skewX(-12deg);
+      transition: transform 0.82s cubic-bezier(0.64, 0, 0.12, 1);
+      will-change: transform;
+      backface-visibility: hidden;
+      contain: layout paint style;
+    }
+
+    /* Closing order: text fades out, then Black peels away first followed by the colors */
+    .color-slab.s1 { background: #e11d48; transition-duration: 0.74s; transition-delay: 0.56s; }
+    .color-slab.s2 { background: #ea580c; transition-duration: 0.78s; transition-delay: 0.48s; }
+    .color-slab.s3 { background: #f59e0b; transition-duration: 0.82s; transition-delay: 0.40s; }
+    .color-slab.s4 { background: #84cc16; transition-duration: 0.86s; transition-delay: 0.32s; }
+    .color-slab.s5 { background: #059669; transition-duration: 0.90s; transition-delay: 0.24s; }
+    .color-slab.s6 { background: #4338ca; transition-duration: 0.95s; transition-delay: 0.16s; }
+    .color-slab.s7 { background: #09090b; transition-duration: 1.00s; transition-delay: 0.08s; }
+
+    .help-overlay.open .color-slab {
+      transform: translate3d(0, 0, 0) skewX(-12deg);
+    }
+
+    /* Opening order: weighted colors cascade across first, Black follows LAST, then text fades in */
+    .help-overlay.open .color-slab.s1 { transition-duration: 0.76s; transition-delay: 0s; }
+    .help-overlay.open .color-slab.s2 { transition-duration: 0.80s; transition-delay: 0.075s; }
+    .help-overlay.open .color-slab.s3 { transition-duration: 0.84s; transition-delay: 0.155s; }
+    .help-overlay.open .color-slab.s4 { transition-duration: 0.89s; transition-delay: 0.24s; }
+    .help-overlay.open .color-slab.s5 { transition-duration: 0.94s; transition-delay: 0.33s; }
+    .help-overlay.open .color-slab.s6 { transition-duration: 1.00s; transition-delay: 0.425s; }
+    .help-overlay.open .color-slab.s7 { transition-duration: 1.08s; transition-delay: 0.53s; }
+
+    .help-content-wrap {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 28px;
+      overflow-y: auto;
+      color: #fafafa;
+      opacity: 0;
+      transition: opacity 0.18s ease 0s;
+      will-change: opacity;
+    }
+
+    .help-overlay.open .help-content-wrap {
+      opacity: 1;
+      transition: opacity 0.48s ease 1.45s;
+    }
+
+    .help-box {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .help-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .help-title {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: #ffffff;
+    }
+
+    .help-sub {
+      font-size: 13.5px;
+      color: #a1a1aa;
+      margin-top: 2px;
+    }
+
+    .help-close-btn {
+      appearance: none;
+      border: 1px solid #27272a;
+      background: #18181b;
+      color: #fafafa;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.16s ease;
+    }
+
+    .help-close-btn:hover {
+      background: #ffffff;
+      color: #09090b;
+      border-color: #ffffff;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .help-card {
+      background: #121215;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 15px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .help-card-tag {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #27272a;
+      color: #e4e4e7;
+    }
+
+    .help-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .help-card-desc {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #a1a1aa;
+    }
+
+    .help-try-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .help-try-chip {
+      appearance: none;
+      border: 1px solid #3f3f46;
+      background: #18181b;
+      color: #fafafa;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .help-try-chip:hover {
+      background: #ffffff;
+      color: #09090b;
+      border-color: #ffffff;
+    }
+
+    .help-shortcuts-bar {
+      background: #121215;
+      border: 1px solid #27272a;
+      border-radius: 14px;
+      padding: 11px 15px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12.5px;
+      color: #a1a1aa;
+    }
+
+    .help-shortcuts-bar code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
+      background: #27272a;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 11.5px;
+    }
+
+    @media (max-width: 600px) {
+      .top-right-actions {
+        top: 14px;
+        right: 14px;
+        gap: 8px;
+      }
+      .theme-fab,
+      .help-fab {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .help-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Top-Right Action Bar: Theme Toggle + Help Button -->
+  <div class="top-right-actions">
+    <button type="button" class="theme-fab" id="themeToggleBtn" aria-label="Toggle color theme" title="Switch light / dark theme">
+      <svg class="theme-icon-moon" viewBox="0 0 24 24">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <svg class="theme-icon-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <span id="themeToggleLabel">Dark</span>
+    </button>
+
+    <button type="button" class="help-fab" id="helpOpenBtn" title="How to use">
+      <span class="help-fab-badge">?</span>
+      <span>Help</span>
+    </button>
+  </div>
+
+  <!-- Multi-Color Diagonal Sliding Cascade Overlay + Black Instructions Page -->
+  <div class="help-overlay" id="helpOverlay" aria-hidden="true">
+    <div class="color-slab s1"></div>
+    <div class="color-slab s2"></div>
+    <div class="color-slab s3"></div>
+    <div class="color-slab s4"></div>
+    <div class="color-slab s5"></div>
+    <div class="color-slab s6"></div>
+    <div class="color-slab s7"></div>
+
+    <div class="help-content-wrap">
+      <div class="help-box">
+        <div class="help-header">
+          <div>
+            <h2 class="help-title">How It Works (In 10 Seconds)</h2>
+            <p class="help-sub">Type in any order. Typos are fixed automatically. Click any example below to test it:</p>
+          </div>
+          <button type="button" class="help-close-btn" id="helpCloseBtn">Got it ✕</button>
+        </div>
+
+        <div class="help-grid">
+          <div class="help-card">
+            <span class="help-card-tag">1 • PAST PAPERS</span>
+            <div class="help-card-title">Subject + Session + Year + Paper</div>
+            <div class="help-card-desc">Press <strong>Enter ↵</strong> to open the PDF. Turn <strong>Include MS → yes</strong> to open QP &amp; MS together.</div>
+            <div class="help-try-row">
+              <button type="button" class="help-try-chip" data-example="physics a level mj 2023 p12">physics a level mj 2023 p12 ↗</button>
+              <button type="button" class="help-try-chip" data-example="fm p2v2 mj 2021">fm p2v2 mj 2021 ↗</button>
+            </div>
+          </div>
+
+          <div class="help-card">
+            <span class="help-card-tag">2 • EXAMINER REPORTS</span>
+            <div class="help-card-title">Just Add "er" or "examiner report"</div>
+            <div class="help-card-desc">No paper or variant needed. Auto-completes &amp; checks which years have an official report.</div>
+            <div class="help-try-row">
+              <button type="button" class="help-try-chip" data-example="9702 s23 er">9702 s23 er ↗</button>
+              <button type="button" class="help-try-chip" data-example="fm er">fm er ↗</button>
+            </div>
+          </div>
+
+          <div class="help-card">
+            <span class="help-card-tag">3 • SYLLABUS PDF</span>
+            <div class="help-card-title">Type "syllabus" or Flip the Top Toggle</div>
+            <div class="help-card-desc">Fetches the official Cambridge syllabus PDF for any O-Level or A-Level subject.</div>
+            <div class="help-try-row">
+              <button type="button" class="help-try-chip" data-example="a level chem syllabus">a level chem syllabus ↗</button>
+              <button type="button" class="help-try-chip" data-example="5054 sy">5054 sy ↗</button>
+            </div>
+          </div>
+
+          <div class="help-card">
+            <span class="help-card-tag">4 • UPCOMING SCHEDULE</span>
+            <div class="help-card-title">Type Subject + Paper for Live Dates</div>
+            <div class="help-card-desc">Instantly shows upcoming <strong>Feb/Mar</strong> &amp; <strong>May/June</strong> exam dates and days remaining.</div>
+            <div class="help-try-row">
+              <button type="button" class="help-try-chip" data-example="9702 p12">9702 p12 ↗</button>
+              <button type="button" class="help-try-chip" data-example="math 9709 p32">math 9709 p32 ↗</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-shortcuts-bar">
+          <span>Shortcuts: <code>mj</code> / <code>s23</code> = May/June</span>
+          <span><code>on</code> / <code>w23</code> = Oct/Nov</span>
+          <span><code>fm</code> / <code>m23</code> = Feb/Mar (or Further Maths)</span>
+          <span><code>p12</code> or <code>p1v2</code> = Paper 1 Variant 2</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <main class="stage">
     <h1 class="page-heading">Cambridge Past Paper Fetcher</h1>
 
     <!-- Controls Directly Above Search Bar -->
     <div class="controls-bar">
-      <div class="segmented" id="levelSelector" data-active="none" role="group" aria-label="Exam Level">
-        <div class="segmented-thumb"></div>
-        <button type="button" class="seg-btn active" data-level="none">Auto</button>
-        <button type="button" class="seg-btn" data-level="olevel">O-Level</button>
-        <button type="button" class="seg-btn" data-level="alevel">A-Level</button>
+      <div class="controls-left">
+        <div class="mode-segmented" id="modeSelector" data-mode="paper" role="group" aria-label="Fetch Mode">
+          <div class="mode-thumb"></div>
+          <button type="button" class="mode-btn active" data-mode="paper">Past Paper</button>
+          <button type="button" class="mode-btn" data-mode="syllabus">Syllabus</button>
+        </div>
+
+        <div class="segmented" id="levelSelector" data-active="none" role="group" aria-label="Exam Level">
+          <div class="segmented-thumb"></div>
+          <button type="button" class="seg-btn active" data-level="none">Auto</button>
+          <button type="button" class="seg-btn" data-level="olevel">O-Level</button>
+          <button type="button" class="seg-btn" data-level="alevel">A-Level</button>
+        </div>
       </div>
 
       <!-- Separated Label + Dedicated 2-Way Toggle -->
-      <div class="ms-group">
+      <div class="ms-group" id="msGroup">
         <span class="ms-label">Include MS</span>
         <div class="ms-switch" id="msToggle" data-ms="yes" role="switch" aria-checked="true" tabindex="0">
           <div class="ms-thumb"></div>
@@ -799,6 +1536,9 @@
       </span>
     </div>
 
+    <!-- Live Schedule & Syllabus Stage -->
+    <div class="live-info-stage" id="liveInfoStage" aria-live="polite"></div>
+
     <!-- Dismissible Popup Permission Prompt (Shown when Include MS = yes) -->
     <div class="popup-notice" id="popupNotice">
       <div class="popup-notice-left">
@@ -832,6 +1572,7 @@
 
   <script>
     const PAPACAMBRIDGE_BASE = "https://pastpapers.papacambridge.com/directories/CAIE/CAIE-pastpapers/upload";
+    const PAPACAMBRIDGE_SYLLABUS_BASE = "https://syllabus.papacambridge.com/directories/CAIE/CAIE-syllabus/upload";
 
     /********************************************************************
      * 1. CORE + EXTENDED SUBJECT CATALOG WITH STUDENT SLANG ALIASES
@@ -1065,12 +1806,23 @@
     /********************************************************************
      * 2. DAMERAU-LEVENSHTEIN + ANAGRAM & CONSONANT SKELETON ENGINE
      ********************************************************************/
+    const SKELETON_CACHE = new Map();
+    const SORTED_CACHE = new Map();
+
     function consonantSkeleton(str) {
-      return str.toLowerCase().replace(/[^a-z]/g, "").replace(/[aeiou]/g, "");
+      let cached = SKELETON_CACHE.get(str);
+      if (cached !== undefined) return cached;
+      cached = str.toLowerCase().replace(/[^a-z]/g, "").replace(/[aeiou]/g, "");
+      SKELETON_CACHE.set(str, cached);
+      return cached;
     }
 
     function sortedLetters(str) {
-      return str.toLowerCase().replace(/[^a-z]/g, "").split("").sort().join("");
+      let cached = SORTED_CACHE.get(str);
+      if (cached !== undefined) return cached;
+      cached = str.toLowerCase().replace(/[^a-z]/g, "").split("").sort().join("");
+      SORTED_CACHE.set(str, cached);
+      return cached;
     }
 
     function damerauLevenshtein(a, b) {
@@ -1158,12 +1910,472 @@
       return v >= 1 && v <= maxV;
     }
 
+    /********************************************************************
+     * 2B. PAPACAMBRIDGE SYLLABUS CATALOG & OFFICIAL CAIE TIMETABLE DB
+     ********************************************************************/
+    const SYLLABUS_RANGES = {
+      "0417": ["23-25", "26-28"],
+      "1123": ["23", "24-26", "27-28"],
+      "2010": ["23-25", "26", "27"],
+      "2058": ["22-23", "24-25", "26-27"],
+      "2059": ["23", "24", "25", "26"],
+      "2069": ["22-24", "25-27"],
+      "2147": ["23", "24-26", "27-28"],
+      "2210": ["23-25", "26-28"],
+      "2217": ["23", "24-25", "26", "27-29"],
+      "2251": ["23-24", "25-27"],
+      "2281": ["23-25", "26", "27-29"],
+      "3248": ["23", "24-26", "27-29"],
+      "4024": ["22-24", "25-27"],
+      "4037": ["23-24", "25-27"],
+      "4040": ["22-24", "25-27"],
+      "5014": ["22-24", "25-26", "27-29"],
+      "5054": ["23-25", "26-28"],
+      "5070": ["23-25", "26-28"],
+      "5090": ["23-25", "26-28"],
+      "5129": ["23-25", "26-28"],
+      "5180": ["23"],
+      "6065": ["23-25", "26-28"],
+      "7100": ["22-24", "25", "26-28"],
+      "7115": ["23-25", "26"],
+      "7707": ["23-25", "26", "27-29"],
+      "8021": ["22-24", "25-27"],
+      "8291": ["22-24", "25-27"],
+      "9084": ["23-25"],
+      "9093": ["21-23", "24-26", "27-28"],
+      "9231": ["23-25", "26-27"],
+      "9239": ["23-25", "26-28"],
+      "9488": ["21-23", "24-26", "27-29"],
+      "9489": ["21-23", "24-25", "26", "27-29"],
+      "9607": ["21-23", "24-26", "27"],
+      "9609": ["23-25", "26-28"],
+      "9618": ["21-23", "24-25", "26", "27-29"],
+      "9626": ["22-24", "25-27"],
+      "9686": ["23", "24", "25-26"],
+      "9693": ["22-24", "25-27"],
+      "9694": ["23-25", "26-27"],
+      "9695": ["21-23", "24-26", "27-28"],
+      "9696": ["23-24", "25-26", "27-29"],
+      "9699": ["21-23", "24-26", "27-28"],
+      "9700": ["22-24", "25-27"],
+      "9701": ["22-24", "25-27"],
+      "9702": ["22-24", "25-27"],
+      "9706": ["23-25", "26-28"],
+      "9708": ["23-25", "26-28"],
+      "9709": ["23-25", "26-27"],
+      "9990": ["21-23", "24-26", "27"]
+    };
+
+    const COMPONENT_META = {
+      "0417_1": ["1h 30m", "Information & Communication Technology (Theory)"],
+      "1123_1": ["2h", "English Language (Reading)"],
+      "1123_2": ["2h", "English Language (Writing)"],
+      "2010_1": ["1h 30m", "Literature in English (Poetry & Prose)"],
+      "2010_2": ["1h 30m", "Literature in English (Drama)"],
+      "2058_1": ["1h 30m", "Islamiyat (Paper 1)"],
+      "2058_2": ["1h 30m", "Islamiyat (Paper 2)"],
+      "2059_1": ["1h 30m", "Pakistan Studies (History & Culture)"],
+      "2059_2": ["1h 30m", "Pakistan Studies (Environment of Pakistan)"],
+      "2069_1": ["1h 25m", "Global Perspectives (Written Exam)"],
+      "2147_1": ["2h", "History (Structured Questions)"],
+      "2147_2": ["1h 45m", "History (Document Questions)"],
+      "2210_1": ["1h 45m", "Computer Science (Computer Systems)"],
+      "2210_2": ["1h 45m", "Computer Science (Algorithms, Programming & Logic)"],
+      "2217_1": ["1h 45m", "Geography (Geographical Themes)"],
+      "2217_2": ["1h 30m", "Geography (Geographical Skills)"],
+      "2217_3": ["1h 30m", "Geography (Geographical Investigations)"],
+      "2251_1": ["2h", "Sociology (Paper 1)"],
+      "2251_2": ["1h 45m", "Sociology (Paper 2)"],
+      "2281_1": ["45m", "Economics (Multiple Choice)"],
+      "2281_2": ["2h 15m", "Economics (Structured Questions)"],
+      "3248_1": ["2h", "Second Language Urdu (Reading & Writing)"],
+      "3248_2": ["1h 45m", "Second Language Urdu (Essay & Transformation)"],
+      "4024_1": ["2h", "Mathematics Syllabus D (Non-Calculator)"],
+      "4024_2": ["2h", "Mathematics Syllabus D (Calculator)"],
+      "4037_1": ["2h", "Additional Mathematics (Paper 1)"],
+      "4037_2": ["2h", "Additional Mathematics (Paper 2)"],
+      "4040_1": ["2h 15m", "Statistics (Paper 1)"],
+      "4040_2": ["2h 15m", "Statistics (Paper 2)"],
+      "5014_1": ["1h 45m", "Environmental Management (Theory)"],
+      "5014_2": ["1h 45m", "Environmental Management (Management in Context)"],
+      "5054_1": ["1h", "Physics (Multiple Choice)"],
+      "5054_2": ["1h 45m", "Physics (Theory)"],
+      "5054_3": ["1h 30m", "Physics (Practical Test)"],
+      "5054_4": ["1h", "Physics (Alternative to Practical)"],
+      "5070_1": ["1h", "Chemistry (Multiple Choice)"],
+      "5070_2": ["1h 45m", "Chemistry (Theory)"],
+      "5070_3": ["1h 30m", "Chemistry (Practical Test)"],
+      "5070_4": ["1h", "Chemistry (Alternative to Practical)"],
+      "5090_1": ["1h", "Biology (Multiple Choice)"],
+      "5090_2": ["1h 45m", "Biology (Theory)"],
+      "5090_3": ["1h 30m", "Biology (Practical Test)"],
+      "5090_4": ["1h", "Biology (Alternative to Practical)"],
+      "5129_1": ["1h", "Combined Science (Multiple Choice)"],
+      "5129_2": ["1h 45m", "Combined Science (Theory)"],
+      "5129_3": ["1h", "Combined Science (Experimental Skills)"],
+      "6065_1": ["2h", "Food & Nutrition (Theory)"],
+      "7100_1": ["1h", "Commerce (Multiple Choice)"],
+      "7100_2": ["2h", "Commerce (Written)"],
+      "7115_1": ["1h 30m", "Business Studies (Short Answer & Data Response)"],
+      "7115_2": ["1h 30m", "Business Studies (Case Study)"],
+      "7707_1": ["1h 15m", "Accounting (Multiple Choice)"],
+      "7707_2": ["1h 45m", "Accounting (Structured Written)"],
+      "8021_1": ["1h 15m", "English General Paper (Essay)"],
+      "8021_2": ["1h 45m", "English General Paper (Comprehension)"],
+      "8291_1": ["1h 45m", "Environmental Management (Paper 1)"],
+      "8291_2": ["1h 45m", "Environmental Management (Paper 2)"],
+      "9084_1": ["1h 30m", "Law (English Legal System)"],
+      "9084_2": ["1h 30m", "Law (Criminal Law)"],
+      "9084_3": ["1h 30m", "Law (Law of Contract)"],
+      "9084_4": ["1h 30m", "Law (Law of Tort)"],
+      "9093_1": ["2h 15m", "English Language (Reading)"],
+      "9093_2": ["2h", "English Language (Writing)"],
+      "9093_3": ["2h 15m", "English Language (Language Analysis)"],
+      "9093_4": ["2h 15m", "English Language (Language Topics)"],
+      "9231_1": ["2h", "Further Mathematics (Further Pure 1)"],
+      "9231_2": ["2h", "Further Mathematics (Further Pure 2)"],
+      "9231_3": ["1h 30m", "Further Mathematics (Further Mechanics)"],
+      "9231_4": ["1h 30m", "Further Mathematics (Further Probability & Stats)"],
+      "9239_1": ["1h 30m", "Global Perspectives & Research (Written)"],
+      "9488_1": ["1h 30m", "Islamic Studies (Paper 1)"],
+      "9488_2": ["1h 30m", "Islamic Studies (Paper 2)"],
+      "9488_3": ["1h 30m", "Islamic Studies (Paper 3)"],
+      "9488_4": ["1h 30m", "Islamic Studies (Paper 4)"],
+      "9489_1": ["1h 15m", "History (Document Question)"],
+      "9489_2": ["1h 45m", "History (Outline Study)"],
+      "9489_3": ["1h 15m", "History (Interpretations Question)"],
+      "9489_4": ["1h 45m", "History (Depth Study)"],
+      "9607_2": ["2h", "Media Studies (Key Media Concepts)"],
+      "9607_4": ["2h", "Media Studies (Critical Perspectives)"],
+      "9609_1": ["1h 15m", "Business (Business Concepts 1)"],
+      "9609_2": ["1h 30m", "Business (Business Concepts 2)"],
+      "9609_3": ["1h 45m", "Business (Business Decision-Making)"],
+      "9609_4": ["1h 15m", "Business (Business Strategy)"],
+      "9618_1": ["1h 30m", "Computer Science (Theory Fundamentals)"],
+      "9618_2": ["2h", "Computer Science (Fundamental Problem-Solving)"],
+      "9618_3": ["1h 30m", "Computer Science (Advanced Theory)"],
+      "9618_4": ["2h 30m", "Computer Science (Practical)"],
+      "9626_1": ["1h 45m", "Information Technology (Theory)"],
+      "9626_3": ["1h 45m", "Information Technology (Advanced Theory)"],
+      "9686_2": ["1h 45m", "Urdu (Reading & Writing)"],
+      "9686_3": ["1h 30m", "Urdu (Essay)"],
+      "9686_4": ["2h 30m", "Urdu (Texts)"],
+      "9693_1": ["1h 45m", "Marine Science (AS Structured)"],
+      "9693_2": ["1h 45m", "Marine Science (AS Data-Handling & Investigative)"],
+      "9693_3": ["1h 45m", "Marine Science (A2 Theory)"],
+      "9693_4": ["1h 45m", "Marine Science (A2 Data-Handling & Extended)"],
+      "9694_1": ["1h 30m", "Thinking Skills (Problem Solving)"],
+      "9694_2": ["1h 45m", "Thinking Skills (Critical Thinking)"],
+      "9694_3": ["2h", "Thinking Skills (Problem Analysis & Solution)"],
+      "9694_4": ["1h 45m", "Thinking Skills (Applied Reasoning)"],
+      "9695_1": ["2h", "Literature in English (Drama & Poetry)"],
+      "9695_2": ["2h", "Literature in English (Prose & Unseen)"],
+      "9695_3": ["2h", "Literature in English (Shakespeare & Drama)"],
+      "9695_4": ["2h", "Literature in English (Pre- and Post-1900 Poetry & Prose)"],
+      "9696_1": ["1h 30m", "Geography (Core Physical Geography)"],
+      "9696_2": ["1h 30m", "Geography (Core Human Geography)"],
+      "9696_3": ["1h 30m", "Geography (Advanced Physical Geography)"],
+      "9696_4": ["1h 30m", "Geography (Advanced Human Geography)"],
+      "9699_1": ["1h 30m", "Sociology (Socialisation, Identity & Methods)"],
+      "9699_2": ["1h 30m", "Sociology (The Family)"],
+      "9699_3": ["1h 15m", "Sociology (Education)"],
+      "9699_4": ["1h 45m", "Sociology (Globalisation, Media & Religion)"],
+      "9700_1": ["1h 15m", "Biology (Multiple Choice)"],
+      "9700_2": ["1h 15m", "Biology (AS Level Structured Questions)"],
+      "9700_3": ["2h", "Biology (Advanced Practical Skills)"],
+      "9700_4": ["2h", "Biology (A Level Structured Questions)"],
+      "9700_5": ["1h 15m", "Biology (Planning, Analysis & Evaluation)"],
+      "9701_1": ["1h 15m", "Chemistry (Multiple Choice)"],
+      "9701_2": ["1h 15m", "Chemistry (AS Level Structured Questions)"],
+      "9701_3": ["2h", "Chemistry (Advanced Practical Skills)"],
+      "9701_4": ["2h", "Chemistry (A Level Structured Questions)"],
+      "9701_5": ["1h 15m", "Chemistry (Planning, Analysis & Evaluation)"],
+      "9702_1": ["1h 15m", "Physics (Multiple Choice)"],
+      "9702_2": ["1h 15m", "Physics (AS Level Structured Questions)"],
+      "9702_3": ["2h", "Physics (Advanced Practical Skills)"],
+      "9702_4": ["2h", "Physics (A Level Structured Questions)"],
+      "9702_5": ["1h 15m", "Physics (Planning, Analysis & Evaluation)"],
+      "9706_1": ["1h", "Accounting (AS Multiple Choice)"],
+      "9706_2": ["1h 45m", "Accounting (AS Fundamentals)"],
+      "9706_3": ["1h 30m", "Accounting (Financial Accounting)"],
+      "9706_4": ["1h", "Accounting (Cost & Management Accounting)"],
+      "9708_1": ["1h", "Economics (AS Multiple Choice)"],
+      "9708_2": ["2h", "Economics (AS Data Response & Essays)"],
+      "9708_3": ["1h 15m", "Economics (A Level Multiple Choice)"],
+      "9708_4": ["2h", "Economics (A Level Data Response & Essays)"],
+      "9709_1": ["1h 50m", "Mathematics (Pure Mathematics 1)"],
+      "9709_2": ["1h 15m", "Mathematics (Pure Mathematics 2)"],
+      "9709_3": ["1h 50m", "Mathematics (Pure Mathematics 3)"],
+      "9709_4": ["1h 15m", "Mathematics (Mechanics)"],
+      "9709_5": ["1h 15m", "Mathematics (Probability & Statistics 1)"],
+      "9709_6": ["1h 15m", "Mathematics (Probability & Statistics 2)"],
+      "9990_1": ["1h 30m", "Psychology (Approaches, Issues & Debates)"],
+      "9990_2": ["1h 30m", "Psychology (Research Methods)"],
+      "9990_3": ["1h 30m", "Psychology (Specialist Options: Theory)"],
+      "9990_4": ["1h 30m", "Psychology (Specialist Options: Application)"]
+    };
+
+    const EXAM_TIMETABLE = {
+      m27: {"0417_12":"Mon 08 Feb|PM","9706_12":"Tue 02 Mar|AM","9706_22":"Fri 05 Feb|AM","9700_12":"Thu 04 Mar|PM","9700_22":"Wed 10 Feb|PM","9700_33":"Thu 25 Feb|PM","9609_12":"Thu 04 Feb|AM","9609_22":"Tue 09 Feb|AM","9701_12":"Mon 01 Mar|PM","9701_22":"Thu 04 Feb|PM","9701_33":"Tue 23 Feb|PM","9708_12":"Mon 01 Mar|AM","9708_22":"Wed 10 Feb|AM","8021_12":"Tue 09 Feb|PM","8021_22":"Fri 26 Feb|PM","9093_12":"Fri 05 Feb|PM","9093_22":"Tue 09 Feb|PM","9626_12":"Thu 18 Feb|AM","9709_12":"Wed 03 Feb|PM","9709_22":"Mon 08 Feb|PM","9709_42":"Mon 08 Feb|PM","9709_52":"Mon 15 Feb|PM","9702_12":"Wed 03 Mar|PM","9702_22":"Fri 12 Feb|PM","9702_33":"Thu 18 Feb|PM","9990_12":"Wed 03 Feb|AM","9990_22":"Thu 11 Feb|PM","9699_12":"Mon 08 Feb|AM","9699_22":"Thu 11 Feb|AM","9706_32":"Tue 16 Feb|AM","9706_42":"Wed 24 Feb|AM","9700_42":"Wed 17 Feb|PM","9700_52":"Wed 10 Feb|PM","9609_32":"Fri 12 Feb|AM","9609_42":"Wed 17 Feb|AM","9701_42":"Tue 16 Feb|PM","9701_52":"Thu 04 Feb|PM","9708_32":"Thu 04 Mar|AM","9708_42":"Tue 23 Feb|AM","9093_32":"Fri 26 Feb|PM","9093_42":"Tue 02 Mar|PM","9626_32":"Mon 22 Feb|AM","9709_62":"Mon 08 Feb|PM","9709_32":"Mon 22 Feb|PM","9702_42":"Wed 24 Feb|PM","9702_52":"Fri 12 Feb|PM","9990_32":"Mon 15 Feb|AM","9990_42":"Thu 25 Feb|AM","9699_32":"Fri 19 Feb|AM","9699_42":"Fri 26 Feb|AM"},
+      s27: {"0417_13":"Thu 06 May|AM","2217_12":"Tue 04 May|AM","2217_22":"Mon 17 May|AM","2217_32":"Fri 21 May|AM","2147_13":"Fri 07 May|AM","2147_23":"Mon 10 May|AM","2058_12":"Mon 26 Apr|AM","2058_22":"Wed 05 May|AM","2010_13":"Wed 12 May|AM","2010_23":"Wed 19 May|AM","4024_12":"Tue 27 Apr|AM","4024_22":"Wed 05 May|AM","5054_12":"Wed 09 Jun|AM","5054_22":"Mon 03 May|AM","5054_32":"Tue 25 May|AM","5054_42":"Tue 25 May|AM","2251_13":"Tue 11 May|AM","2251_23":"Thu 27 May|AM","4040_12":"Mon 17 May|AM","4040_22":"Mon 24 May|AM","7707_12":"Thu 03 Jun|AM","7707_22":"Fri 14 May|AM","4037_12":"Tue 18 May|AM","4037_22":"Thu 27 May|AM","5090_12":"Tue 08 Jun|AM","5090_22":"Tue 04 May|AM","5090_32":"Tue 11 May|AM","5090_42":"Tue 11 May|AM","7115_11":"Thu 13 May|AM","7115_21":"Thu 20 May|AM","5070_12":"Thu 10 Jun|AM","5070_22":"Tue 27 Apr|AM","5070_32":"Thu 13 May|AM","5070_42":"Thu 13 May|AM","5129_12":"Wed 09 Jun|AM","5129_22":"Mon 03 May|AM","5129_32":"Tue 25 May|AM","7100_13":"Fri 04 Jun|AM","7100_23":"Tue 01 Jun|AM","2210_12":"Mon 10 May|AM","2210_22":"Wed 19 May|AM","2281_12":"Fri 11 Jun|AM","2281_22":"Wed 26 May|AM","1123_12":"Thu 06 May|AM","1123_22":"Thu 29 Apr|AM","5014_12":"Mon 24 May|AM","5014_22":"Fri 28 May|AM","9706_13":"Thu 03 Jun|AM","9706_23":"Mon 10 May|AM","9700_12":"Wed 09 Jun|AM","9700_22":"Thu 13 May|AM","9700_33":"Thu 06 May|AM","9700_34":"Thu 20 May|AM","9609_13":"Thu 06 May|AM","9609_23":"Wed 12 May|AM","9701_12":"Tue 08 Jun|AM","9701_22":"Wed 19 May|AM","9701_33":"Tue 27 Apr|AM","9701_34":"Thu 27 May|AM","9618_13":"Mon 10 May|AM","9618_23":"Thu 13 May|AM","9708_12":"Mon 07 Jun|AM","9708_22":"Wed 05 May|AM","8021_12":"Wed 28 Apr|AM","8021_22":"Mon 03 May|AM","9093_12":"Mon 26 Apr|AM","9093_22":"Tue 04 May|AM","8291_13":"Tue 27 Apr|EV","8291_23":"Mon 03 May|EV","9231_13":"Thu 06 May|AM","9231_33":"Wed 26 May|AM","9231_43":"Tue 01 Jun|AM","9696_12":"Thu 06 May|AM","9696_22":"Tue 11 May|AM","9239_12":"Fri 30 Apr|AM","9489_13":"Sat 01 May|AM","9489_23":"Fri 07 May|AM","9626_13":"Mon 10 May|AM","9084_12":"Wed 26 May|AM","9084_22":"Fri 28 May|AM","9695_12":"Wed 28 Apr|AM","9695_22":"Mon 10 May|AM","9693_13":"Tue 27 Apr|AM","9693_23":"Thu 29 Apr|AM","9709_13":"Wed 28 Apr|AM","9709_23":"Fri 07 May|EV","9709_43":"Fri 07 May|AM","9709_53":"Tue 11 May|AM","9607_22":"Wed 05 May|AM","9702_12":"Thu 10 Jun|AM","9702_22":"Wed 12 May|AM","9702_33":"Thu 29 Apr|AM","9702_34":"Tue 18 May|AM","9990_12":"Tue 27 Apr|AM","9990_22":"Thu 29 Apr|AM","9699_13":"Tue 11 May|AM","9699_23":"Fri 14 May|AM","9694_13":"Mon 26 Apr|EV","9694_23":"Fri 30 Apr|EV","9706_33":"Tue 18 May|AM","9706_43":"Tue 25 May|AM","9700_42":"Tue 11 May|AM","9700_52":"Thu 13 May|AM","9609_33":"Thu 13 May|AM","9609_43":"Thu 20 May|AM","9701_42":"Wed 05 May|AM","9701_52":"Wed 19 May|AM","9618_33":"Fri 21 May|AM","9708_32":"Fri 11 Jun|AM","9708_42":"Mon 24 May|AM","9093_32":"Fri 07 May|AM","9093_42":"Tue 25 May|AM","9231_23":"Fri 28 May|AM","9696_32":"Fri 14 May|AM","9696_42":"Fri 21 May|AM","9489_33":"Thu 13 May|AM","9489_43":"Fri 21 May|AM","9626_33":"Fri 21 May|AM","9084_32":"Tue 01 Jun|AM","9084_42":"Fri 04 Jun|AM","9695_32":"Fri 14 May|AM","9695_42":"Wed 19 May|AM","9693_33":"Mon 03 May|EV","9693_43":"Wed 05 May|EV","9709_33":"Fri 14 May|AM","9709_63":"Fri 07 May|AM","9607_42":"Wed 12 May|AM","9702_42":"Mon 10 May|AM","9702_52":"Wed 12 May|AM","9990_32":"Thu 13 May|AM","9990_42":"Tue 18 May|AM","9699_33":"Thu 27 May|AM","9699_43":"Tue 01 Jun|AM","9694_33":"Tue 04 May|EV","9694_43":"Fri 07 May|EV","0417_12":"Thu 06 May|PM","2147_12":"Fri 07 May|PM","2147_22":"Mon 10 May|PM","2058_11":"Mon 26 Apr|PM","2058_21":"Wed 05 May|PM","2010_12":"Wed 12 May|PM","2010_22":"Wed 19 May|PM","4024_12":"Wed 28 Apr|PM","4024_22":"Wed 05 May|PM","2059_1":"Fri 30 Apr|PM","2059_2":"Mon 03 May|PM","5054_11":"Wed 09 Jun|PM","5054_21":"Mon 03 May|PM","5054_31":"Tue 25 May|PM","5054_41":"Tue 25 May|PM","3248_1":"Tue 27 Apr|PM","3248_2":"Tue 04 May|PM","2251_12":"Tue 11 May|PM","2251_22":"Thu 27 May|PM","7707_11":"Thu 03 Jun|PM","7707_21":"Fri 14 May|PM","4037_11":"Tue 18 May|PM","4037_21":"Thu 27 May|PM","5090_11":"Tue 08 Jun|PM","5090_21":"Tue 04 May|PM","5090_31":"Tue 11 May|AM","5090_41":"Tue 11 May|PM","5070_11":"Thu 10 Jun|PM","5070_21":"Tue 27 Apr|PM","5070_31":"Thu 13 May|AM","5070_41":"Thu 13 May|AM","7100_12":"Fri 04 Jun|PM","7100_22":"Tue 01 Jun|PM","2210_11":"Mon 10 May|PM","2210_21":"Wed 19 May|PM","2281_11":"Fri 11 Jun|PM","2281_21":"Wed 26 May|PM","1123_11":"Thu 06 May|PM","1123_21":"Thu 29 Apr|PM","6065_12":"Tue 08 Jun|PM","9706_12":"Thu 03 Jun|PM","9706_22":"Mon 10 May|PM","9700_11":"Wed 09 Jun|AM","9700_21":"Thu 13 May|AM","9700_31":"Thu 06 May|AM","9700_32":"Thu 20 May|AM","9609_12":"Tue 04 May|PM","9609_22":"Wed 12 May|PM","9701_11":"Tue 08 Jun|AM","9701_21":"Wed 19 May|AM","9701_31":"Tue 27 Apr|AM","9701_32":"Thu 27 May|AM","9618_12":"Mon 10 May|PM","9618_22":"Thu 13 May|PM","9708_11":"Mon 07 Jun|AM","9708_21":"Wed 05 May|AM","8021_11":"Wed 28 Apr|AM","8021_21":"Mon 03 May|AM","9093_11":"Mon 26 Apr|AM","9093_21":"Tue 04 May|AM","8291_12":"Tue 27 Apr|PM","8291_22":"Mon 03 May|PM","9231_12":"Thu 06 May|PM","9231_32":"Wed 26 May|PM","9231_42":"Tue 01 Jun|PM","9696_11":"Thu 06 May|AM","9696_21":"Tue 11 May|AM","9239_11":"Fri 30 Apr|AM","9489_12":"Fri 30 Apr|PM","9489_22":"Thu 06 May|PM","9626_12":"Mon 10 May|PM","9084_11":"Wed 26 May|AM","9084_21":"Fri 28 May|AM","9695_11":"Wed 28 Apr|AM","9695_21":"Mon 10 May|AM","9693_12":"Tue 27 Apr|PM","9693_22":"Thu 29 Apr|PM","9709_12":"Wed 28 Apr|PM","9709_22":"Fri 07 May|PM","9709_42":"Fri 07 May|PM","9709_52":"Tue 11 May|PM","9607_21":"Wed 05 May|AM","9702_11":"Thu 10 Jun|AM","9702_21":"Wed 12 May|AM","9702_31":"Thu 29 Apr|AM","9702_32":"Tue 18 May|AM","9990_11":"Tue 27 Apr|AM","9990_21":"Thu 29 Apr|AM","9699_12":"Tue 11 May|PM","9699_22":"Fri 14 May|PM","9694_12":"Mon 26 Apr|PM","9694_22":"Fri 30 Apr|PM","9706_32":"Tue 18 May|PM","9706_42":"Tue 25 May|PM","9700_41":"Tue 11 May|AM","9700_51":"Thu 13 May|AM","9609_32":"Thu 13 May|PM","9609_42":"Thu 20 May|PM","9701_41":"Wed 05 May|AM","9701_51":"Wed 19 May|AM","9618_32":"Tue 18 May|PM","9708_31":"Fri 11 Jun|AM","9708_41":"Mon 24 May|AM","9093_31":"Fri 07 May|AM","9093_41":"Tue 25 May|AM","9231_22":"Fri 28 May|PM","9696_31":"Fri 14 May|AM","9696_41":"Fri 21 May|AM","9489_32":"Thu 13 May|PM","9489_42":"Fri 21 May|PM","9626_32":"Fri 21 May|PM","9084_31":"Tue 01 Jun|AM","9084_41":"Fri 04 Jun|AM","9695_31":"Fri 14 May|AM","9695_41":"Wed 19 May|AM","9693_32":"Mon 03 May|PM","9693_42":"Wed 05 May|PM","9709_32":"Fri 14 May|PM","9709_62":"Fri 07 May|PM","9607_41":"Wed 12 May|AM","9702_41":"Mon 10 May|AM","9702_51":"Wed 12 May|AM","9990_31":"Thu 13 May|AM","9990_41":"Tue 18 May|AM","9699_32":"Thu 27 May|PM","9699_42":"Tue 01 Jun|PM","9694_32":"Tue 04 May|PM","9694_42":"Fri 07 May|PM","2069_12":"Thu 29 Apr|PM","0417_11":"Thu 06 May|PM","9706_11":"Thu 03 Jun|PM","9706_21":"Mon 10 May|PM","9609_11":"Tue 04 May|PM","9609_21":"Wed 12 May|PM","9618_11":"Mon 10 May|PM","9618_21":"Thu 13 May|PM","8291_11":"Tue 27 Apr|PM","8291_21":"Mon 03 May|PM","9231_11":"Thu 06 May|PM","9231_31":"Wed 26 May|PM","9231_41":"Tue 01 Jun|PM","9489_11":"Fri 30 Apr|PM","9489_21":"Thu 06 May|PM","9626_11":"Mon 10 May|PM","9693_11":"Tue 27 Apr|PM","9693_21":"Thu 29 Apr|PM","9709_11":"Wed 28 Apr|PM","9709_21":"Fri 07 May|PM","9709_41":"Fri 07 May|PM","9709_51":"Tue 11 May|PM","9699_11":"Tue 11 May|PM","9699_21":"Fri 14 May|PM","9694_11":"Mon 26 Apr|PM","9694_21":"Fri 30 Apr|PM","9706_31":"Tue 18 May|PM","9706_41":"Tue 25 May|PM","9609_31":"Thu 13 May|PM","9609_41":"Thu 20 May|PM","9618_31":"Fri 21 May|PM","9231_21":"Fri 28 May|PM","9489_31":"Thu 13 May|PM","9489_41":"Fri 21 May|PM","9626_31":"Fri 21 May|PM","9693_31":"Mon 03 May|PM","9693_41":"Wed 05 May|PM","9709_31":"Fri 14 May|PM","9709_61":"Fri 07 May|PM","9699_31":"Thu 27 May|PM","9699_41":"Tue 01 Jun|PM","9694_31":"Tue 04 May|PM","9694_41":"Fri 07 May|PM"}
+    };
+
+    const STORAGE_KEY_MODE = "caie_selected_mode_v1";
+    let selectedMode = localStorage.getItem(STORAGE_KEY_MODE) || "paper";
+    let scheduleSelectedVariant = null;
+
+    // HTTP-200 Verified PapaCambridge Examiner Report (_er.pdf) Sessions per Subject Code
+    const VALID_ER_MAP = {
+      "0417":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,m16,s16,m17,w17,m18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m24,m25,s25,m26",
+      "1123":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2010":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2058":"s10,w10,s11,w11,s12,w12,s13,w13,s15,w15,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2059":"s10,w10,s11,w11,s12,w12,s13,w13,s14,s15,w15,s16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2069":"s18,s19,w20,s21,s22,s23",
+      "2147":"w20,s21,w21,s22,w22,s23,w23",
+      "2210":"s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2217":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,s17,w17,s18,w18,s19,w20,w21,w22,w23",
+      "2251":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "2281":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "3248":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "4024":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "4037":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "4040":"w10,w11,w12,w13,w14,w15,w16,w17,w18,w19,w20,w21,w22,w23",
+      "5014":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23",
+      "5054":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,w20,s21,w21,s22,w22,s23,w23",
+      "5070":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "5090":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "5129":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "5180":"w14,w15,w16,w17,w18,w19,w20,s22,w22,s23,w23",
+      "6065":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "7100":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "7115":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "7707":"w20,s21,s22,s23,w23",
+      "8021":"s19,w19,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "8291":"s10,w10,s11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9084":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,w15,s16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9093":"s14,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9231":"s10,w10,s11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9239":"s17,w17,m18,m20,m21,m22,m23,m25",
+      "9488":"w21,s22,w22,s23,w23",
+      "9489":"m21,s21,w21,m22,s22,w22,m23,s23,w23,m25",
+      "9607":"w15,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9609":"s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9618":"s21,w22,s23,w23",
+      "9626":"m17,s17,w17,m18,s18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9686":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9693":"s10,s11,s12,s13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9694":"s10,w10,s11,s12,w12,s13,w13,s14,w14,s15,w15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9695":"s10,w10,s11,s12,w12,s13,w13,s14,s15,s16,w16,s17,w17,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,m25,m26",
+      "9696":"s10,w10,s11,s12,w12,s13,w13,s14,w14,s15,s16,w16,s17,w17,s18,w18,s19,w19,w20,s21,w21,s22,w22,s23,w23",
+      "9699":"s10,w10,s11,s12,w12,s13,w13,s14,w14,s15,w15,s17,w17,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9700":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9701":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9702":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9706":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9708":"s10,w10,s11,s12,w12,s13,w13,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,m19,s19,w19,m20,w20,m21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9709":"s10,w10,s11,w11,s12,w12,s13,w13,s14,w14,s15,w15,m16,s16,w16,m17,s17,w17,m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,m22,s22,w22,m23,s23,w23,m25,m26",
+      "9990":"m18,s18,w18,m19,s19,w19,m20,w20,m21,s21,w21,s22,w22,m23,s23,w23,m25,m26"
+    };
+
+    function formatErSyLabel(sy) {
+      const s = sy[0];
+      const y = "20" + sy.slice(1);
+      const sName = s === "s" ? "May/June" : s === "w" ? "Oct/Nov" : "Feb/Mar";
+      return `${sName} ${y}`;
+    }
+
+    const ER_LIST_CACHE = new Map();
+
+    function getValidErList(code) {
+      let cached = ER_LIST_CACHE.get(code);
+      if (cached !== undefined) return cached;
+      const rawList = VALID_ER_MAP[code];
+      cached = rawList ? rawList.split(",").filter(Boolean).reverse() : [];
+      ER_LIST_CACHE.set(code, cached);
+      return cached;
+    }
+
+    function resolveExaminerReport(code, session, yearShort) {
+      if (!code) return null;
+      const allValid = getValidErList(code);
+      if (allValid.length === 0) {
+        const fallbackSy = `${session || "s"}${yearShort || "23"}`;
+        return {
+          exists: true,
+          autoCompleted: !session || !yearShort,
+          chosenSy: fallbackSy,
+          session: fallbackSy[0],
+          sessionLabel: fallbackSy[0] === "s" ? "May/June" : fallbackSy[0] === "w" ? "Oct/Nov" : "Feb/Mar",
+          year: "20" + fallbackSy.slice(1),
+          yearShort: fallbackSy.slice(1),
+          filename: `${code}_${fallbackSy}_er.pdf`,
+          url: `${PAPACAMBRIDGE_BASE}/${code}_${fallbackSy}_er.pdf`,
+          suggestions: []
+        };
+      }
+
+      // Case 1: Both session and year typed — cross-check exact existence
+      if (session && yearShort) {
+        const targetSy = `${session}${yearShort}`;
+        const exists = allValid.includes(targetSy);
+        const sameYearOrSession = allValid.filter(sy => sy.slice(1) === yearShort || sy[0] === session);
+        const suggestions = (sameYearOrSession.length > 0 ? sameYearOrSession : allValid).slice(0, 8);
+        return {
+          exists,
+          autoCompleted: false,
+          chosenSy: exists ? targetSy : suggestions[0],
+          session,
+          sessionLabel: session === "s" ? "May/June" : session === "w" ? "Oct/Nov" : "Feb/Mar",
+          year: "20" + yearShort,
+          yearShort,
+          filename: `${code}_${targetSy}_er.pdf`,
+          url: `${PAPACAMBRIDGE_BASE}/${code}_${targetSy}_er.pdf`,
+          suggestions
+        };
+      }
+
+      // Case 2: Only session typed (e.g., "9702 mj er") -> auto-complete to latest year for that session
+      if (session && !yearShort) {
+        const matchingSession = allValid.filter(sy => sy[0] === session);
+        if (matchingSession.length === 0) {
+          return {
+            exists: false,
+            autoCompleted: false,
+            chosenSy: allValid[0],
+            session,
+            sessionLabel: session === "s" ? "May/June" : session === "w" ? "Oct/Nov" : "Feb/Mar",
+            year: null,
+            yearShort: null,
+            filename: null,
+            url: null,
+            suggestions: allValid.slice(0, 8)
+          };
+        }
+        const chosenSy = matchingSession[0];
+        return {
+          exists: true,
+          autoCompleted: true,
+          chosenSy,
+          session: chosenSy[0],
+          sessionLabel: chosenSy[0] === "s" ? "May/June" : chosenSy[0] === "w" ? "Oct/Nov" : "Feb/Mar",
+          year: "20" + chosenSy.slice(1),
+          yearShort: chosenSy.slice(1),
+          filename: `${code}_${chosenSy}_er.pdf`,
+          url: `${PAPACAMBRIDGE_BASE}/${code}_${chosenSy}_er.pdf`,
+          suggestions: matchingSession.slice(0, 8)
+        };
+      }
+
+      // Case 3: Only year typed (e.g., "9702 2023 er") -> auto-complete to latest session in that year
+      if (!session && yearShort) {
+        const matchingYear = allValid.filter(sy => sy.slice(1) === yearShort);
+        if (matchingYear.length === 0) {
+          return {
+            exists: false,
+            autoCompleted: false,
+            chosenSy: allValid[0],
+            session: null,
+            sessionLabel: null,
+            year: "20" + yearShort,
+            yearShort,
+            filename: null,
+            url: null,
+            suggestions: allValid.slice(0, 8)
+          };
+        }
+        const chosenSy = matchingYear[0];
+        return {
+          exists: true,
+          autoCompleted: true,
+          chosenSy,
+          session: chosenSy[0],
+          sessionLabel: chosenSy[0] === "s" ? "May/June" : chosenSy[0] === "w" ? "Oct/Nov" : "Feb/Mar",
+          year: "20" + chosenSy.slice(1),
+          yearShort: chosenSy.slice(1),
+          filename: `${code}_${chosenSy}_er.pdf`,
+          url: `${PAPACAMBRIDGE_BASE}/${code}_${chosenSy}_er.pdf`,
+          suggestions: matchingYear
+        };
+      }
+
+      // Case 4: Neither session nor year typed (e.g., "fm er" or "9702 er") -> auto-complete to latest available ER
+      const chosenSy = allValid[0];
+      return {
+        exists: true,
+        autoCompleted: true,
+        chosenSy,
+        session: chosenSy[0],
+        sessionLabel: chosenSy[0] === "s" ? "May/June" : chosenSy[0] === "w" ? "Oct/Nov" : "Feb/Mar",
+        year: "20" + chosenSy.slice(1),
+        yearShort: chosenSy.slice(1),
+        filename: `${code}_${chosenSy}_er.pdf`,
+        url: `${PAPACAMBRIDGE_BASE}/${code}_${chosenSy}_er.pdf`,
+        suggestions: allValid.slice(0, 8)
+      };
+    }
+
+    function resolveSyllabusForCode(code, requestedYear) {
+      if (!code) return null;
+      const ranges = SYLLABUS_RANGES[code];
+      if (!ranges || ranges.length === 0) {
+        const y2 = requestedYear ? String(requestedYear).slice(-2) : "26";
+        return {
+          chosenRange: y2,
+          filename: `${code}_y${y2}_sy.pdf`,
+          url: `${PAPACAMBRIDGE_SYLLABUS_BASE}/${code}_y${y2}_sy.pdf`,
+          allEditions: [{ range: y2, label: `20${y2}`, filename: `${code}_y${y2}_sy.pdf`, url: `${PAPACAMBRIDGE_SYLLABUS_BASE}/${code}_y${y2}_sy.pdf` }]
+        };
+      }
+
+      const targetY2 = requestedYear ? parseInt(String(requestedYear).slice(-2), 10) : 26;
+      let chosenRange = ranges[ranges.length - 1];
+
+      for (const r of ranges) {
+        const parts = r.split("-").map(n => parseInt(n, 10));
+        const startY = parts[0];
+        const endY = parts.length > 1 ? parts[1] : parts[0];
+        if (targetY2 >= startY && targetY2 <= endY) {
+          chosenRange = r;
+          break;
+        }
+      }
+
+      if (requestedYear) {
+        const firstStart = parseInt(ranges[0].split("-")[0], 10);
+        if (targetY2 < firstStart) chosenRange = ranges[0];
+      }
+
+      const allEditions = ranges.map(r => {
+        const parts = r.split("-");
+        const label = parts.length > 1 ? `20${parts[0]}–20${parts[1]}` : `20${parts[0]}`;
+        const filename = `${code}_y${r}_sy.pdf`;
+        return {
+          range: r,
+          label,
+          filename,
+          url: `${PAPACAMBRIDGE_SYLLABUS_BASE}/${filename}`
+        };
+      });
+
+      const chosenEdition = allEditions.find(e => e.range === chosenRange) || allEditions[allEditions.length - 1];
+      return {
+        chosenRange: chosenEdition.range,
+        label: chosenEdition.label,
+        filename: chosenEdition.filename,
+        url: chosenEdition.url,
+        allEditions
+      };
+    }
+
     function parseSearchQuery(rawText, toggleLevel) {
       const result = {
         level: toggleLevel !== "none" ? toggleLevel : null,
         levelAutoDetected: null,
         levelLockedByCode: false,
         levelFromToggleOnly: toggleLevel !== "none",
+        syllabusRequestedInQuery: false,
+        examinerReportRequested: false,
         subjectName: null,
         subjectObj: null,
         subjectCode: null,
@@ -1193,8 +2405,54 @@
       const tokens = normalized.split(" ");
       const usedIndices = new Set();
 
+      // 0A. Detect explicit Syllabus keywords in query ("syllabus", "syl", "sy", "spec")
+      tokens.forEach((tok, idx) => {
+        if (
+          tok === "sy" ||
+          tok === "syl" ||
+          tok === "syll" ||
+          tok === "spec" ||
+          fuzzyScore(tok, "syllabus") >= 0.75 ||
+          fuzzyScore(tok, "specification") >= 0.78
+        ) {
+          result.syllabusRequestedInQuery = true;
+          usedIndices.add(idx);
+        }
+      });
+
+      // 0B. Detect Examiner Report keywords ("examiner report", "er", "exam report", "report")
+      for (let i = 0; i < tokens.length; i++) {
+        if (usedIndices.has(i)) continue;
+        const t = tokens[i];
+        const next = (!usedIndices.has(i + 1) && tokens[i + 1]) ? tokens[i + 1] : "";
+
+        if (
+          next &&
+          (t === "exam" || fuzzyScore(t, "examiner") >= 0.72 || fuzzyScore(t, "examiners") >= 0.72) &&
+          (fuzzyScore(next, "report") >= 0.72 || fuzzyScore(next, "reports") >= 0.72)
+        ) {
+          result.examinerReportRequested = true;
+          usedIndices.add(i);
+          usedIndices.add(i + 1);
+          i++;
+          continue;
+        }
+
+        if (
+          t === "er" ||
+          fuzzyScore(t, "examiner") >= 0.8 ||
+          fuzzyScore(t, "examiners") >= 0.8 ||
+          t === "report" ||
+          t === "reports"
+        ) {
+          result.examinerReportRequested = true;
+          usedIndices.add(i);
+        }
+      }
+
       // 1. Detect 4-digit Year or 4-digit Subject Code
       tokens.forEach((tok, idx) => {
+        if (usedIndices.has(idx)) return;
         if (/^\d{4}$/.test(tok)) {
           const num = parseInt(tok, 10);
           if (num >= 2000 && num <= 2035 && !result.year) {
@@ -1270,13 +2528,29 @@
         }
       }
 
-      // 3. Detect Explicit Paper & Variant tokens
+      // 3. Detect Explicit Paper & Variant tokens (including glued p2v2 / v2p2 / paper2variant2)
       for (let i = 0; i < tokens.length; i++) {
         if (usedIndices.has(i)) continue;
         const t = tokens[i];
         const next = (!usedIndices.has(i + 1) && tokens[i + 1]) ? tokens[i + 1] : "";
 
         if (t === "qp" || t === "ms") {
+          usedIndices.add(i);
+          continue;
+        }
+
+        const pvBothGlued = t.match(/^(?:p|paper|ppr|papr|paepr)(\d)(?:v|var|variant|vrnt|varint)(\d)$/i);
+        if (pvBothGlued) {
+          if (!result.paper) result.paper = pvBothGlued[1];
+          if (!result.variant) result.variant = pvBothGlued[2];
+          usedIndices.add(i);
+          continue;
+        }
+
+        const vpBothGlued = t.match(/^(?:v|var|variant|vrnt|varint)(\d)(?:p|paper|ppr|papr|paepr)(\d)$/i);
+        if (vpBothGlued) {
+          if (!result.variant) result.variant = vpBothGlued[1];
+          if (!result.paper) result.paper = vpBothGlued[2];
           usedIndices.add(i);
           continue;
         }
@@ -1295,7 +2569,7 @@
           continue;
         }
 
-        const pvPrefixed = t.match(/^(?:p|qp|ms|paper)(\d)(\d)$/i);
+        const pvPrefixed = t.match(/^(?:p|qp|ms|paper|ppr|papr|paepr)(\d)(\d)$/i);
         if (pvPrefixed && !result.paper && !result.variant) {
           result.paper = pvPrefixed[1];
           result.variant = pvPrefixed[2];
@@ -1512,6 +2786,23 @@
         }
       }
 
+      if (!result.subjectObj) {
+        for (let i = 0; i < tokens.length; i++) {
+          if (!usedIndices.has(i) && (tokens[i] === "fm" || tokens[i] === "fmath" || tokens[i] === "fmaths")) {
+            const fmSubj = CORE_SUBJECTS[0];
+            result.subjectObj = fmSubj;
+            result.subjectName = fmSubj.name;
+            if (!result.levelLockedByCode) {
+              result.level = "alevel";
+              result.levelAutoDetected = "alevel";
+            }
+            result.subjectCode = fmSubj.alevel;
+            usedIndices.add(i);
+            break;
+          }
+        }
+      }
+
       if (result.subjectObj && !result.subjectCode) {
         if (result.level === "alevel") {
           result.subjectCode = result.subjectObj.alevel;
@@ -1588,7 +2879,12 @@
       } else if (bareTwoDigitIndices.length === 1) {
         const idx = bareTwoDigitIndices[0];
         const tok = tokens[idx];
-        if (result.year && !result.paper && !result.variant) {
+        const isSylMode = selectedMode === "syllabus" || result.syllabusRequestedInQuery;
+        if (isSylMode && !result.year) {
+          result.year = "20" + tok;
+          result.yearShort = tok;
+          usedIndices.add(idx);
+        } else if (result.year && !result.paper && !result.variant) {
           result.paper = tok[0];
           result.variant = tok[1];
           usedIndices.add(idx);
@@ -1621,13 +2917,21 @@
     /********************************************************************
      * 4. CAIE SYLLABUS, PAPER, VARIANT, SESSION & YEAR VALIDATOR
      ********************************************************************/
-    function validateCaiePaperExistence(parsed) {
+    function validateCaiePaperExistence(parsed, effectiveMode = "paper") {
       const errors = [];
       const invalidPills = new Set();
 
       const yearNum = parsed.year ? parseInt(parsed.year, 10) : null;
       const paperNum = parsed.paper ? parseInt(parsed.paper, 10) : null;
       const variantNum = parsed.variant ? parseInt(parsed.variant, 10) : null;
+
+      if (effectiveMode === "syllabus") {
+        if (yearNum !== null && (yearNum < 2016 || yearNum > 2029)) {
+          errors.push(`Syllabus year ${yearNum} out of range (2016–2029)`);
+          invalidPills.add("year");
+        }
+        return { isValid: errors.length === 0, errors, invalidPills };
+      }
 
       if (yearNum !== null) {
         if (yearNum < 2002 || yearNum > 2026) {
@@ -1698,8 +3002,11 @@
     /********************************************************************
      * 5. UI CONTROLS, POPUP NOTICE, UMAMI EVENTS & RED FLASH
      ********************************************************************/
+    const modeSelector = document.getElementById("modeSelector");
+    const modeBtns = document.querySelectorAll(".mode-btn");
     const levelSelector = document.getElementById("levelSelector");
     const levelBtns = document.querySelectorAll(".seg-btn");
+    const msGroup = document.getElementById("msGroup");
     const msToggle = document.getElementById("msToggle");
     const searchShell = document.getElementById("searchShell");
     const searchInput = document.getElementById("searchInput");
@@ -1707,9 +3014,18 @@
     const placeholderText = document.getElementById("placeholderText");
     const resolvedBadge = document.getElementById("resolvedBadge");
     const enterBtn = document.getElementById("enterBtn");
+    const liveInfoStage = document.getElementById("liveInfoStage");
     const popupNotice = document.getElementById("popupNotice");
     const dismissPopupNoticeBtn = document.getElementById("dismissPopupNoticeBtn");
     const missingPillsStage = document.getElementById("missingPillsStage");
+
+    const PILL_ELS = {};
+    ["level", "subject", "session", "year", "paper", "variant"].forEach(key => {
+      const el = document.querySelector(`.pill[data-pill="${key}"]`);
+      if (el) {
+        PILL_ELS[key] = { el, valEl: el.querySelector(".pill-val") };
+      }
+    });
 
     let previousValue = "";
 
@@ -1721,6 +3037,21 @@
       } catch (e) {}
     }
 
+    function setVisualModeSlider(visualMode, isExaminerReport = false) {
+      modeSelector.setAttribute("data-mode", visualMode);
+      modeBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === visualMode);
+      });
+      msGroup.classList.toggle("dimmed", visualMode === "syllabus" || isExaminerReport);
+      placeholderText.textContent = visualMode === "syllabus"
+        ? "Search subject syllabus (e.g. a level physics)..."
+        : "Search your paper...";
+
+      if (PILL_ELS.session) PILL_ELS.session.el.classList.toggle("pill-collapsed", visualMode === "syllabus");
+      if (PILL_ELS.paper) PILL_ELS.paper.el.classList.toggle("pill-collapsed", visualMode === "syllabus" || isExaminerReport);
+      if (PILL_ELS.variant) PILL_ELS.variant.el.classList.toggle("pill-collapsed", visualMode === "syllabus" || isExaminerReport);
+    }
+
     function setVisualLevelSlider(visualLevel) {
       levelSelector.setAttribute("data-active", visualLevel);
       levelBtns.forEach(btn => {
@@ -1728,14 +3059,27 @@
       });
     }
 
-    function syncMsUI() {
+    function syncMsUI(effectiveMode = selectedMode, isExaminerReport = false) {
       msToggle.setAttribute("data-ms", msEnabled ? "yes" : "no");
       msToggle.setAttribute("aria-checked", String(msEnabled));
-      popupNotice.classList.toggle("visible", msEnabled && !popupNoticeDismissed);
+      popupNotice.classList.toggle("visible", effectiveMode === "paper" && !isExaminerReport && msEnabled && !popupNoticeDismissed);
     }
 
+    setVisualModeSlider(selectedMode, false);
     setVisualLevelSlider(selectedToggleLevel);
-    syncMsUI();
+    syncMsUI(selectedMode, false);
+
+    modeBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectedMode = btn.dataset.mode;
+        localStorage.setItem(STORAGE_KEY_MODE, selectedMode);
+        setVisualModeSlider(selectedMode, false);
+        syncMsUI(selectedMode, false);
+        clearMissingPills();
+        updateLiveState();
+        searchInput.focus();
+      });
+    });
 
     dismissPopupNoticeBtn.addEventListener("click", () => {
       popupNoticeDismissed = true;
@@ -1797,7 +3141,7 @@
         blurMirror.removeChild(placeholderText);
       }
 
-      const existingSpans = Array.from(blurMirror.querySelectorAll(".char-span"));
+      const existingSpans = blurMirror.children;
       let commonPrefix = 0;
       const minLen = Math.min(previousValue.length, newValue.length);
       while (commonPrefix < minLen && previousValue[commonPrefix] === newValue[commonPrefix]) {
@@ -1805,17 +3149,18 @@
       }
 
       while (existingSpans.length > commonPrefix) {
-        const popped = existingSpans.pop();
-        if (popped && popped.parentNode === blurMirror) {
-          blurMirror.removeChild(popped);
-        }
+        blurMirror.removeChild(blurMirror.lastElementChild);
       }
 
-      for (let i = commonPrefix; i < newValue.length; i++) {
-        const span = document.createElement("span");
-        span.className = "char-span animate-in";
-        span.textContent = newValue[i];
-        blurMirror.appendChild(span);
+      if (commonPrefix < newValue.length) {
+        const frag = document.createDocumentFragment();
+        for (let i = commonPrefix; i < newValue.length; i++) {
+          const span = document.createElement("span");
+          span.className = "char-span animate-in";
+          span.textContent = newValue[i];
+          frag.appendChild(span);
+        }
+        blurMirror.appendChild(frag);
       }
 
       previousValue = newValue;
@@ -1823,18 +3168,238 @@
     }
 
     function updatePill(key, text, isDetected, isInvalid) {
-      const pill = document.querySelector(`.pill[data-pill="${key}"]`);
-      if (!pill) return;
-      pill.querySelector(".pill-val").textContent = text || "—";
-      pill.classList.remove("missing-alert");
-      pill.classList.toggle("detected", Boolean(isDetected) && !isInvalid);
-      pill.classList.toggle("invalid", Boolean(isInvalid));
+      const entry = PILL_ELS[key];
+      if (!entry) return;
+      entry.valEl.textContent = text || "—";
+      entry.el.classList.remove("missing-alert");
+      entry.el.classList.toggle("detected", Boolean(isDetected) && !isInvalid);
+      entry.el.classList.toggle("invalid", Boolean(isInvalid));
+    }
+
+    const MONTH_INDEX_MAP = {
+      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+    };
+
+    function getUpcomingExamInfo(shortDateStr, yearNum) {
+      const m = String(shortDateStr).match(/(\d{1,2})\s+([A-Za-z]{3})/);
+      if (!m) return { isUpcoming: true, relative: "" };
+
+      const day = parseInt(m[1], 10);
+      const monthIdx = MONTH_INDEX_MAP[m[2]];
+      const y = parseInt(yearNum, 10);
+      if (monthIdx === undefined || isNaN(day) || isNaN(y)) return { isUpcoming: true, relative: "" };
+
+      const examDate = new Date(y, monthIdx, day);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diffDays = Math.round((examDate.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return { isUpcoming: false, relative: "" };
+      }
+      if (diffDays === 0) return { isUpcoming: true, relative: "Exam is Today" };
+      if (diffDays === 1) return { isUpcoming: true, relative: "1 day remaining" };
+      return { isUpcoming: true, relative: `${diffDays} days remaining` };
+    }
+
+    function applyErQuickChip(syCode) {
+      const sChar = syCode[0];
+      const y4 = "20" + syCode.slice(1);
+      const sWord = sChar === "s" ? "mj" : sChar === "w" ? "on" : "fm";
+      let current = searchInput.value.trim();
+      // Remove any existing session/year tokens and append chosen session + year
+      current = current
+        .replace(/\b(20\d{2}|\d{2}|[swm]\d{2}|mj|may\s*june|on|oct\s*nov|feb\s*mar|summer|winter)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      searchInput.value = `${current} ${sWord} ${y4}`.trim();
+      renderBlurMirror(searchInput.value);
+      clearMissingPills();
+      updateLiveState();
+      searchInput.focus();
+    }
+
+    function renderLiveScheduleAndSyllabus(parsed, resolvedCode, effectiveMode, validation) {
+      liveInfoStage.innerHTML = "";
+      const hasPaperOrVariantError = validation.invalidPills.has("paper") || validation.invalidPills.has("variant") || validation.invalidPills.has("level");
+      if (!resolvedCode || !parsed.subjectObj || hasPaperOrVariantError) return;
+
+      const sylInfo = resolveSyllabusForCode(resolvedCode, parsed.year);
+
+      // 1. In Syllabus Mode: show all syllabus PDF editions for this subject
+      if (effectiveMode === "syllabus" && sylInfo) {
+        const card = document.createElement("div");
+        card.className = "schedule-card";
+        const editionsHtml = sylInfo.allEditions.map(ed => {
+          const isChosen = ed.filename === sylInfo.filename;
+          return `<a href="${ed.url}" target="_blank" rel="noopener noreferrer" class="syl-quick-link" style="${isChosen ? 'background:var(--text);color:var(--bg);border-color:var(--text);' : ''}">
+            Syllabus ${ed.label} (${ed.filename}) ↗
+          </a>`;
+        }).join("");
+
+        card.innerHTML = `
+          <div class="schedule-top">
+            <div class="schedule-title-group">
+              <span class="schedule-badge">${resolvedCode}</span>
+              <span class="schedule-comp-title">${parsed.subjectName} — Official CAIE Syllabus PDF</span>
+            </div>
+            <span class="schedule-dur-pill">Press ↵ to open ${sylInfo.filename}</span>
+          </div>
+          <div class="schedule-actions">${editionsHtml}</div>
+        `;
+        liveInfoStage.appendChild(card);
+        return;
+      }
+
+      // 2. In Examiner Report Mode: show verified ER availability & auto-complete chips
+      if (parsed.examinerReportRequested) {
+        const erInfo = resolveExaminerReport(resolvedCode, parsed.session, parsed.yearShort);
+        if (!erInfo) return;
+
+        const card = document.createElement("div");
+        card.className = "schedule-card";
+
+        const chipsHtml = erInfo.suggestions.map(sy => {
+          const isCurrent = erInfo.exists && erInfo.chosenSy === sy;
+          return `<button type="button" class="var-chip ${isCurrent ? 'active' : ''}" data-er-sy="${sy}" title="${formatErSyLabel(sy)}">
+            ${sy.toUpperCase()} (${formatErSyLabel(sy)})
+          </button>`;
+        }).join("");
+
+        const statusHeadline = erInfo.exists
+          ? `${erInfo.autoCompleted ? "Auto-completed latest report:" : "Verified available:"} ${erInfo.filename}`
+          : `No Examiner Report published for ${parsed.sessionLabel || ""} ${parsed.year || ""} — pick an available session:`;
+
+        card.innerHTML = `
+          <div class="schedule-top">
+            <div class="schedule-title-group">
+              <span class="schedule-badge" style="${!erInfo.exists ? 'background:var(--error-bg);' : ''}">${resolvedCode} ER</span>
+              <span class="schedule-comp-title">${statusHeadline}</span>
+            </div>
+            ${erInfo.exists ? `<a href="${erInfo.url}" target="_blank" rel="noopener noreferrer" class="syl-quick-link">Open ${erInfo.filename} ↗</a>` : ""}
+          </div>
+          <div class="schedule-actions">${chipsHtml}</div>
+        `;
+
+        card.querySelectorAll("[data-er-sy]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            applyErQuickChip(btn.dataset.erSy);
+          });
+        });
+
+        liveInfoStage.appendChild(card);
+        return;
+      }
+
+      // 3. Automatic Upcoming Schedule Fetcher (Only when NOT searching for a past year's paper)
+      const isPastPaperYear = Boolean(parsed.year && parseInt(parsed.year, 10) < 2027);
+      const isOctNovPastSearch = parsed.session === "w";
+      if (parsed.paper && !isPastPaperYear && !isOctNovPastSearch) {
+        const pNum = parsed.paper;
+        const isPracP3 = parsed.level === "alevel" && parsed.subjectObj.hasSciencePracticalP3 && pNum === "3";
+        const availableVariants = isPracP3 ? ["3", "4", "1", "2", "5"] : ["1", "2", "3"];
+        const activeVar = parsed.variant || scheduleSelectedVariant || (isPracP3 ? "3" : "2");
+
+        const meta = COMPONENT_META[`${resolvedCode}_${pNum}`] || ["", `${parsed.subjectName} Paper ${pNum}`];
+        const [duration, compTitle] = meta;
+
+        const futureSeriesDefs = [
+          { key: "m27", label: "Feb/Mar 2027", sCode: "m", y4: "2027" },
+          { key: "s27", label: "May/June 2027", sCode: "s", y4: "2027" }
+        ];
+
+        const slots = [];
+        futureSeriesDefs.forEach(sDef => {
+          const table = EXAM_TIMETABLE[sDef.key] || {};
+          // Feb/Mar only has Variant 2 (or 3 for practical P3), so fall back to P_2 / P_3 so Feb/Mar is always shown
+          const entry =
+            table[`${resolvedCode}_${pNum}${activeVar}`] ||
+            table[`${resolvedCode}_${pNum}`] ||
+            (sDef.sCode === "m" ? (table[`${resolvedCode}_${pNum}2`] || table[`${resolvedCode}_${pNum}3`]) : null);
+
+          if (entry) {
+            const [shortDate, sessCode] = entry.split("|");
+            const upcomingCheck = getUpcomingExamInfo(shortDate, sDef.y4);
+            if (!upcomingCheck.isUpcoming) return;
+
+            const sessName = sessCode === "AM" ? "Morning (AM)" : sessCode === "PM" ? "Afternoon (PM)" : "Evening (EV)";
+            const variantUsed = (sDef.sCode === "m" && !table[`${resolvedCode}_${pNum}${activeVar}`])
+              ? (table[`${resolvedCode}_${pNum}2`] ? "2" : "3")
+              : activeVar;
+            const isMatched = parsed.session === sDef.sCode;
+
+            slots.push({
+              ...sDef,
+              shortDate: `${shortDate} ${sDef.y4}`,
+              sessCode,
+              sessName,
+              isMatched,
+              relative: upcomingCheck.relative,
+              variantUsed
+            });
+          }
+        });
+
+        if (slots.length > 0) {
+          const card = document.createElement("div");
+          card.className = "schedule-card";
+
+          const varButtonsHtml = !parsed.variant
+            ? availableVariants.slice(0, 3).map(v => `
+                <button type="button" class="var-chip ${v === activeVar ? 'active' : ''}" data-var="${v}">
+                  P${pNum}${v}
+                </button>
+              `).join("")
+            : `<span class="schedule-dur-pill">Component ${resolvedCode}/${pNum}${activeVar}</span>`;
+
+          const slotsHtml = slots.map(slot => `
+            <div class="schedule-slot ${slot.isMatched ? 'matched-series' : ''}">
+              <div class="slot-series-row">
+                <span>${slot.label} (${resolvedCode}/${pNum}${slot.variantUsed})</span>
+                <span class="slot-session-tag">${slot.sessCode}</span>
+              </div>
+              <div class="slot-date-main">${slot.shortDate}</div>
+              <div class="slot-countdown">${slot.sessName}${slot.relative ? ` • <strong>${slot.relative}</strong>` : ""}</div>
+            </div>
+          `).join("");
+
+          card.innerHTML = `
+            <div class="schedule-top">
+              <div class="schedule-title-group">
+                <span class="schedule-badge">Upcoming Exams</span>
+                <span class="schedule-comp-title">${compTitle}</span>
+                ${duration ? `<span class="schedule-dur-pill">⏱ ${duration}</span>` : ""}
+              </div>
+              <div class="schedule-actions">
+                ${varButtonsHtml}
+              </div>
+            </div>
+            <div class="schedule-grid">${slotsHtml}</div>
+          `;
+
+          card.querySelectorAll(".var-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+              scheduleSelectedVariant = chip.dataset.var;
+              updateLiveState();
+              searchInput.focus();
+            });
+          });
+
+          liveInfoStage.appendChild(card);
+        }
+      }
     }
 
     function updateLiveState() {
       const raw = searchInput.value.trim();
       const parsed = parseSearchQuery(raw, selectedToggleLevel);
-      const validation = validateCaiePaperExistence(parsed);
+      const effectiveMode = parsed.syllabusRequestedInQuery ? "syllabus" : selectedMode;
+      const isEr = effectiveMode === "paper" && parsed.examinerReportRequested;
+      const validation = validateCaiePaperExistence(parsed, effectiveMode);
+
+      setVisualModeSlider(effectiveMode, isEr);
+      syncMsUI(effectiveMode, isEr);
 
       const activeVisualSliderLevel = parsed.levelAutoDetected || selectedToggleLevel;
       setVisualLevelSlider(activeVisualSliderLevel);
@@ -1859,20 +3424,63 @@
             ? `Unknown (${parsed.invalidCodeTyped})`
             : null;
 
+      const sylInfo = effectiveMode === "syllabus" && resolvedCode
+        ? resolveSyllabusForCode(resolvedCode, parsed.year)
+        : null;
+
+      const erInfo = isEr && resolvedCode
+        ? resolveExaminerReport(resolvedCode, parsed.session, parsed.yearShort)
+        : null;
+
+      const erInvalidSession = isEr && erInfo && !erInfo.exists && Boolean(parsed.session);
+      const erInvalidYear = isEr && erInfo && !erInfo.exists && Boolean(parsed.year);
+
       updatePill("level", levelDisplay, Boolean(levelDisplay), validation.invalidPills.has("level"));
       updatePill("subject", subjDisplay, Boolean(parsed.subjectName), Boolean(parsed.invalidCodeTyped));
-      updatePill("session", parsed.sessionLabel, Boolean(parsed.session), validation.invalidPills.has("session"));
-      updatePill("year", parsed.year, Boolean(parsed.year), validation.invalidPills.has("year"));
+      updatePill(
+        "session",
+        isEr && erInfo
+          ? (erInfo.sessionLabel ? (erInfo.autoCompleted && !parsed.session ? `${erInfo.sessionLabel} (Auto)` : erInfo.sessionLabel) : parsed.sessionLabel)
+          : parsed.sessionLabel,
+        isEr && erInfo ? Boolean(erInfo.sessionLabel || parsed.session) : Boolean(parsed.session),
+        validation.invalidPills.has("session") || erInvalidSession
+      );
+      updatePill(
+        "year",
+        effectiveMode === "syllabus"
+          ? (sylInfo ? sylInfo.label : (parsed.year || "Latest (2026)"))
+          : isEr && erInfo
+            ? (erInfo.year ? (erInfo.autoCompleted && !parsed.year ? `${erInfo.year} (Auto)` : erInfo.year) : parsed.year)
+            : parsed.year,
+        effectiveMode === "syllabus"
+          ? Boolean(resolvedCode || parsed.year)
+          : isEr && erInfo
+            ? Boolean(erInfo.year || parsed.year)
+            : Boolean(parsed.year),
+        validation.invalidPills.has("year") || erInvalidYear
+      );
       updatePill("paper", parsed.paper ? `Paper ${parsed.paper}` : null, Boolean(parsed.paper), validation.invalidPills.has("paper"));
       updatePill("variant", parsed.variant ? `Variant ${parsed.variant}` : null, Boolean(parsed.variant), validation.invalidPills.has("variant"));
 
-      if (resolvedCode && parsed.session && parsed.yearShort && parsed.paper && parsed.variant && validation.isValid) {
+      if (effectiveMode === "syllabus") {
+        if (sylInfo && validation.isValid) {
+          resolvedBadge.textContent = sylInfo.filename;
+          resolvedBadge.classList.add("visible");
+        } else {
+          resolvedBadge.classList.remove("visible");
+        }
+      } else if (isEr && erInfo && erInfo.exists) {
+        resolvedBadge.textContent = `${resolvedCode}_${erInfo.chosenSy}_er`;
+        resolvedBadge.classList.add("visible");
+      } else if (resolvedCode && parsed.session && parsed.yearShort && parsed.paper && parsed.variant && validation.isValid) {
         const suffix = msEnabled ? "qp+ms" : "qp";
         resolvedBadge.textContent = `${resolvedCode}_${parsed.session}${parsed.yearShort}_${suffix}_${parsed.paper}${parsed.variant}`;
         resolvedBadge.classList.add("visible");
       } else {
         resolvedBadge.classList.remove("visible");
       }
+
+      renderLiveScheduleAndSyllabus(parsed, resolvedCode, effectiveMode, validation);
     }
 
     function clearMissingPills() {
@@ -1892,11 +3500,11 @@
 
     function flagMissingTagPills(keys) {
       keys.forEach(k => {
-        const pill = document.querySelector(`.pill[data-pill="${k}"]`);
-        if (pill) {
-          pill.classList.remove("missing-alert");
-          void pill.offsetWidth;
-          pill.classList.add("missing-alert");
+        const entry = PILL_ELS[k];
+        if (entry) {
+          entry.el.classList.remove("missing-alert");
+          void entry.el.offsetWidth;
+          entry.el.classList.add("missing-alert");
         }
       });
     }
@@ -1922,14 +3530,15 @@
 
     function executeSearch() {
       const raw = searchInput.value.trim();
+      const parsed = parseSearchQuery(raw, selectedToggleLevel);
+      const effectiveMode = parsed.syllabusRequestedInQuery ? "syllabus" : selectedMode;
+
       if (!raw) {
         triggerErrorFeedback();
-        flagMissingTagPills(["level", "subject", "session", "year", "paper", "variant"]);
-        renderBlurPills(["Enter your paper details above to open the PDF"]);
+        flagMissingTagPills(effectiveMode === "syllabus" ? ["level", "subject"] : ["level", "subject", "session", "year", "paper", "variant"]);
+        renderBlurPills([effectiveMode === "syllabus" ? "Enter a subject and level above to open its Syllabus PDF" : "Enter your paper details above to open the PDF"]);
         return;
       }
-
-      const parsed = parseSearchQuery(raw, selectedToggleLevel);
 
       if (parsed.invalidCodeTyped) {
         triggerErrorFeedback();
@@ -1954,6 +3563,121 @@
         return;
       }
 
+      if (effectiveMode === "syllabus") {
+        const missingKeys = [];
+        const missingNames = [];
+        if (!parsed.level) { missingKeys.push("level"); missingNames.push("Level (O-Level or A-Level)"); }
+        if (!parsed.subjectObj) { missingKeys.push("subject"); missingNames.push("Subject"); }
+
+        if (missingKeys.length > 0) {
+          triggerErrorFeedback();
+          flagMissingTagPills(missingKeys);
+          renderBlurPills([`Forgot to specify: ${missingNames.join(", ")}`]);
+          return;
+        }
+
+        const resolvedCode = parsed.subjectCode || (
+          parsed.level === "alevel" ? parsed.subjectObj.alevel : parsed.subjectObj.olevel
+        );
+
+        if (!resolvedCode) {
+          const availableLevel = parsed.subjectObj.alevel ? "A-Level" : "O-Level";
+          triggerErrorFeedback();
+          flagMissingTagPills(["level"]);
+          renderBlurPills([`${parsed.subjectObj.name} is only offered in ${availableLevel}`]);
+          return;
+        }
+
+        const validation = validateCaiePaperExistence(parsed, "syllabus");
+        if (!validation.isValid) {
+          triggerErrorFeedback();
+          renderBlurPills(validation.errors);
+          return;
+        }
+
+        const sylInfo = resolveSyllabusForCode(resolvedCode, parsed.year);
+        trackUmamiEvent("Syllabus Fetched", {
+          subject: `${parsed.subjectObj.name} (${resolvedCode})`,
+          level: parsed.level === "alevel" ? "A-Level" : "O-Level",
+          file: sylInfo.filename
+        });
+
+        const opened = openExternalTab(sylInfo.url);
+        if (!opened) {
+          renderBlurPills([
+            `<a href="${sylInfo.url}" target="_blank" rel="noopener noreferrer">Open ${sylInfo.filename} ↗</a>`
+          ], "neutral-pill");
+        } else {
+          clearMissingPills();
+        }
+        return;
+      }
+
+      // Examiner Report fetch (with cross-check & auto-complete for ER only)
+      if (parsed.examinerReportRequested) {
+        const missingErKeys = [];
+        const missingErNames = [];
+        if (!parsed.level) { missingErKeys.push("level"); missingErNames.push("Level"); }
+        if (!parsed.subjectObj) { missingErKeys.push("subject"); missingErNames.push("Subject"); }
+
+        if (missingErKeys.length > 0) {
+          triggerErrorFeedback();
+          flagMissingTagPills(missingErKeys);
+          renderBlurPills([`Forgot to specify for Examiner Report: ${missingErNames.join(", ")}`]);
+          return;
+        }
+
+        const resolvedCode = parsed.subjectCode || (
+          parsed.level === "alevel" ? parsed.subjectObj.alevel : parsed.subjectObj.olevel
+        );
+
+        if (!resolvedCode) {
+          const availableLevel = parsed.subjectObj.alevel ? "A-Level" : "O-Level";
+          triggerErrorFeedback();
+          flagMissingTagPills(["level"]);
+          renderBlurPills([`${parsed.subjectObj.name} is only offered in ${availableLevel}`]);
+          return;
+        }
+
+        const erInfo = resolveExaminerReport(resolvedCode, parsed.session, parsed.yearShort);
+        if (!erInfo || !erInfo.exists) {
+          triggerErrorFeedback();
+          const badPills = [];
+          if (parsed.session) badPills.push("session");
+          if (parsed.year) badPills.push("year");
+          flagMissingTagPills(badPills.length ? badPills : ["session", "year"]);
+          const quickBtns = (erInfo?.suggestions || []).slice(0, 4).map(sy =>
+            `<button type="button" data-er-fix="${sy}">Use ${sy.toUpperCase()} (${formatErSyLabel(sy)})</button>`
+          ).join("");
+          renderBlurPills([
+            `Examiner Report not published for ${resolvedCode} ${parsed.sessionLabel || ""} ${parsed.year || ""} ${quickBtns}`
+          ]);
+          missingPillsStage.querySelectorAll("[data-er-fix]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              applyErQuickChip(btn.dataset.erFix);
+              executeSearch();
+            });
+          });
+          return;
+        }
+
+        trackUmamiEvent("Examiner Report Fetched", {
+          subject: `${parsed.subjectObj.name} (${resolvedCode})`,
+          level: parsed.level === "alevel" ? "A-Level" : "O-Level",
+          file: erInfo.filename
+        });
+
+        const erOpened = openExternalTab(erInfo.url);
+        if (!erOpened) {
+          renderBlurPills([
+            `<a href="${erInfo.url}" target="_blank" rel="noopener noreferrer">Open ${erInfo.filename} ↗</a>`
+          ], "neutral-pill");
+        } else {
+          clearMissingPills();
+        }
+        return;
+      }
+
       const missingKeys = [];
       const missingNames = [];
       if (!parsed.level) { missingKeys.push("level"); missingNames.push("Level"); }
@@ -1961,7 +3685,7 @@
       if (!parsed.session) { missingKeys.push("session"); missingNames.push("Session"); }
       if (!parsed.year) { missingKeys.push("year"); missingNames.push("Year"); }
       if (!parsed.paper) { missingKeys.push("paper"); missingNames.push("Paper"); }
-      if (!parsed.variant) { missingKeys.push("variant"); missingNames.push("Variant"); }
+      if (!parsed.variant) { missingKeys.push("variant"); missingKeys.push("Variant"); }
 
       if (missingKeys.length > 0) {
         triggerErrorFeedback();
@@ -1983,7 +3707,7 @@
         return;
       }
 
-      const validation = validateCaiePaperExistence(parsed);
+      const validation = validateCaiePaperExistence(parsed, "paper");
       if (!validation.isValid) {
         triggerErrorFeedback();
         trackUmamiEvent("Invalid Paper Attempt", { query: raw, error: validation.errors[0] });
@@ -2040,6 +3764,76 @@
     });
 
     enterBtn.addEventListener("click", executeSearch);
+
+    // Help Overlay + Multi-Color Diagonal Sliding Cascade Controls
+    const helpOpenBtn = document.getElementById("helpOpenBtn");
+    const helpCloseBtn = document.getElementById("helpCloseBtn");
+    const helpOverlay = document.getElementById("helpOverlay");
+
+    function openHelpOverlay() {
+      helpOverlay.classList.add("open");
+      helpOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeHelpOverlay() {
+      helpOverlay.classList.remove("open");
+      helpOverlay.setAttribute("aria-hidden", "true");
+      searchInput.focus();
+    }
+
+    helpOpenBtn.addEventListener("click", openHelpOverlay);
+    helpCloseBtn.addEventListener("click", closeHelpOverlay);
+
+    document.querySelectorAll(".help-try-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const exampleQuery = chip.dataset.example || "";
+        selectedMode = "paper";
+        localStorage.setItem(STORAGE_KEY_MODE, "paper");
+        searchInput.value = exampleQuery;
+        renderBlurMirror(exampleQuery);
+        clearMissingPills();
+        updateLiveState();
+        closeHelpOverlay();
+      });
+    });
+
+    window.addEventListener("keydown", e => {
+      if (e.key === "Escape" && helpOverlay.classList.contains("open")) {
+        closeHelpOverlay();
+      }
+    });
+
+    // Theme Toggle (Light / High-Contrast Dark Mode persisted in localStorage)
+    const STORAGE_KEY_THEME = "caie_theme_v1";
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeToggleLabel = document.getElementById("themeToggleLabel");
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", normalized);
+      if (themeToggleLabel) {
+        themeToggleLabel.textContent = normalized === "dark" ? "Light" : "Dark";
+      }
+      if (themeToggleBtn) {
+        themeToggleBtn.setAttribute(
+          "aria-label",
+          normalized === "dark" ? "Switch to light theme" : "Switch to dark theme"
+        );
+      }
+    }
+
+    const initialTheme = localStorage.getItem(STORAGE_KEY_THEME) === "dark" ? "dark" : "light";
+    applyTheme(initialTheme);
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        const next = current === "dark" ? "light" : "dark";
+        localStorage.setItem(STORAGE_KEY_THEME, next);
+        applyTheme(next);
+        trackUmamiEvent("Theme Toggled", { theme: next });
+      });
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
       updateLiveState();
